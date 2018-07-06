@@ -33,6 +33,7 @@ _addon.command = 'ctr'
 exampleOnly = false
 
 windower.register_event('addon command', function(...)
+	-- Table of the elemental crystals/clusters, their itemIDs, and quantities in the player inventory
 	local crystalIDs = {
 		{4096, 'fire crystal', 0},
 		{4097, 'ice crystal', 0},
@@ -52,9 +53,16 @@ windower.register_event('addon command', function(...)
 		{4111, 'dark cluster', 0},
 	}
 	
+	-- Read the player inventory
 	local inventory = windower.ffxi.get_items(0)
+	if not inventory then
+		print('Unable to read inventory')
+		return
+	end
+	
 	local numTrades = 0 
 	
+	-- Scan the inventory for each type of crystal and cluster
 	for i = 1, 16 do
 		for k, v in ipairs(inventory) do
 			if v.id == crystalIDs[i][1] then
@@ -63,16 +71,19 @@ windower.register_event('addon command', function(...)
 		end
 	end
 	
+	-- Check the quantities of each item and determine how many trades will be required to clear the inventory of crystals
 	for i = 1, 8 do
 		if crystalIDs[i][3] > 0 or crystalIDs[i + 8][3] > 0 then
 			numTrades = numTrades + 1
 		end
 	end
 	
+	-- Prepare and send command through TradeNPC if there are trades to be made
 	if numTrades > 0 then
 		local tradeString = ''
 		
 		for i = 1, 8 do
+			-- Build the string that will be used as the command
 			tradeString = '//tradenpc '
 			
 			if crystalIDs[i][3] > 0 then
@@ -88,7 +99,7 @@ windower.register_event('addon command', function(...)
 					print(tradeString)
 				else
 					windower.send_command('input '..tradeString)
-					windower.add_to_chat(8, (numTrades - 1)..' trades remaining')
+					windower.add_to_chat(8, 'Crystal Trader: '..(numTrades - 1)..' trades remaining')
 					break
 				end
 			end
