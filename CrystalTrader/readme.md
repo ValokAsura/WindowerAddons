@@ -57,3 +57,16 @@ No other actions are carried out. This addon will not function if you do not hav
 
 I am an amateur programmer and have never tried anything with LUA until now. Please feel free to modify/change/steal any of the code.
 If you end up making this addon better, please let me know!
+
+
+
+Version History
+
+v1.0.0.0
+2018.07.05
+	Initial Release
+	
+v1.0.0.1
+2018.07.08
+	Changes to ensure the script obeys the 8-slot trade limit
+	
