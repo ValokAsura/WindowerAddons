@@ -27,10 +27,10 @@ For more information, please refer to <http://unlicense.org/>
 
 _addon.name = 'Crystal Trader'
 _addon.author = 'Valok@Asura'
-_addon.version = '1.0.0.1'
+_addon.version = '1.1.0'
 _addon.command = 'ctr'
 
-exampleOnly = false
+exampleOnly = true
 
 windower.register_event('addon command', function(...)
 	-- Table of the elemental crystals/clusters, their itemIDs, quantities, and stack count in the player inventory
@@ -53,6 +53,40 @@ windower.register_event('addon command', function(...)
 		{4111, 'dark cluster', 0, 0},
 	}
 	
+	local sealIDs = {
+		{1126, "beastmen's seal", 0, 0},
+		{1127, "kindred's seal", 0, 0},
+		{2955, "kindred's crest", 0, 0},
+		{2956, "high kindred's crest", 0, 0},
+		{2957, "sacred kindred's crest", 0, 0},
+	}
+	
+	local idTable = {}
+	local tableType = ''
+	local target = windower.ffxi.get_mob_by_target('t')
+	
+	if not target then
+		print('CrystalTrader: No target selected')
+		return
+	end
+	
+	if target.name == 'Shami' then
+		local zone = windower.ffxi.get_info()['zone']
+		if zone == 246 then
+			idTable = sealIDs
+			tableType = 'Seals'
+		else
+			print('CrystalTrader: Must target Shami in Port Jeuno')
+			return
+		end
+	elseif target.name == 'Ephemeral Moogle' or target.name == 'Waypoint' then
+		idTable = crystalIDs
+		tableType = 'Crystals'
+	else
+		print('CrystalTrader: Invalid Target')
+		return
+	end
+	
 	-- Read the player inventory
 	local inventory = windower.ffxi.get_items(0)
 	
@@ -62,20 +96,20 @@ windower.register_event('addon command', function(...)
 	end
 	
 	-- Scan the inventory for each type of crystal and cluster
-	for i = 1, 16 do
+	for i = 1, #idTable do
 		for k, v in ipairs(inventory) do
-			if v.id == crystalIDs[i][1] then
-				crystalIDs[i][3] = crystalIDs[i][3] + v.count
-				crystalIDs[i][4] = crystalIDs[i][4] + 1
+			if v.id == idTable[i][1] then
+				idTable[i][3] = idTable[i][3] + v.count
+				idTable[i][4] = idTable[i][4] + 1
 			end
 		end
 	end
 	
 	local numTrades = 0 -- Number of times //ctr needs to be run to empty the player inventory
 
-	for i = 1, 16 do
-		if crystalIDs[i][4] > 0 then
-			numTrades = numTrades + math.ceil(crystalIDs[i][4] / 8)
+	for i = 1, #idTable do
+		if idTable[i][4] > 0 then
+			numTrades = numTrades + math.ceil(idTable[i][4] / 8)
 		end
 	end
 
@@ -85,33 +119,61 @@ windower.register_event('addon command', function(...)
 		local availableTradeSlots = 8
 		--numTrades = numTrades - 1
 		
-		for i = 1, 8 do
-			-- Build the string that will be used as the command
-			tradeString = '//tradenpc '
-			availableTradeSlots = 8
-			
-			if crystalIDs[i][3] > 0 then
-				availableTradeSlots = math.max(1, availableTradeSlots - crystalIDs[i][4])
-				tradeString = tradeString..math.min(96, crystalIDs[i][3])..' "'..crystalIDs[i][2]..'"'
+		if tableType == 'Crystals' then
+			for i = 1, 8 do
+				-- Build the string that will be used as the command
+				tradeString = '//tradenpc '
+				availableTradeSlots = 8
+				
+				if idTable[i][3] > 0 then
+					availableTradeSlots = math.max(1, availableTradeSlots - idTable[i][4])
+					tradeString = tradeString..math.min(availableTradeSlots * 12, idTable[i][3])..' "'..idTable[i][2]..'"'
+				end
+				
+				if availableTradeSlots > 0 and idTable[i + 8][3] > 0 then
+					tradeString = tradeString..' '..math.min(availableTradeSlots * 12, idTable[i + 8][3])..' "'..idTable[i + 8][2]..'"'
+				end
+				
+				if tradeString ~= '//tradenpc ' then
+					if exampleOnly then
+						print(tradeString)
+						windower.add_to_chat(8, 'Crystal Trader: '..(numTrades - 1)..' trades remaining')
+						break
+					else
+						windower.send_command('input '..tradeString)
+						windower.add_to_chat(8, 'Crystal Trader: '..(numTrades - 1)..' trades remaining')
+						break
+					end
+				end
 			end
-			
-			if availableTradeSlots > 0 and crystalIDs[i + 8][3] > 0 then
-				tradeString = tradeString..' '..math.min(availableTradeSlots * 12, crystalIDs[i + 8][3])..' "'..crystalIDs[i + 8][2]..'"'
-			end
-			
-			if tradeString ~= '//tradenpc ' then
-				if exampleOnly then
-					print(tradeString)
-					windower.add_to_chat(8, 'Crystal Trader: '..(numTrades - 1)..' trades remaining')
-					break
-				else
-					windower.send_command('input '..tradeString)
-					windower.add_to_chat(8, 'Crystal Trader: '..(numTrades - 1)..' trades remaining')
-					break
+		elseif tableType == 'Seals' then
+			for i = 1, 5 do
+				tradeString = '//tradenpc '
+				availableTradeSlots = 8
+				
+				if idTable[i][3] > 0 then
+					availableTradeSlots = math.max(1, availableTradeSlots - idTable[i][4])
+					tradeString = tradeString..math.min(availableTradeSlots * 99, idTable[i][3])..' "'..idTable[i][2]..'"'
+				end
+				
+				if tradeString ~= '//tradenpc ' then
+					if exampleOnly then
+						print(tradeString)
+						windower.add_to_chat(8, 'Crystal Trader: '..(numTrades - 1)..' trades remaining')
+						break
+					else
+						windower.send_command('input '..tradeString)
+						windower.add_to_chat(8, 'Crystal Trader: '..(numTrades - 1)..' trades remaining')
+						break
+					end
 				end
 			end
 		end
 	else
-		windower.add_to_chat(8, "Crystal Trader - No crystals in inventory")
+		if tableType == 'Crystals' then
+			windower.add_to_chat(8, "Crystal Trader - No crystals in inventory")
+		elseif tableType == 'Seals' then
+			windower.add_to_chat(8, "Crystal Trader - No seals in inventory")
+		end
 	end
 end)

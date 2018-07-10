@@ -11,6 +11,9 @@ What does this addon do?
 Crystal Trader searches your inventory for standard elemental crystals and clusters, then prepares a command to be used by TradeNPC.
 This allows you to automatically trade stacks of similar clusters and crystals to the Ephemeral Moogles in the crafting guilds.
 
+In v.1.1.0, the ability to trade seals and crests to Shami in Port Jeuno was added. The addon will automatically switch modes if Shami is your target.
+The 5 valid seals are: Beastmen's Seal, Kindred's Seal, Kindred's Crest, High Kindred's Crest, Sacred Kindred's Crest
+
 
 Example
 -------
@@ -22,7 +25,9 @@ The addon will cause TradeNPC to instantly trade all 3 stacks of Fire Crystals a
 After you wait for the moogle to do his thing, target the moogle again and re-enter the command.
 The addon will then cause TradeNPC to instantly trade the stack of Ice Crystals.
 
-You will need to enter the command once for each crystal element you possess in your inventory.
+The behavior is similiar when trading seals or crests to Shami in Port Jeuno
+
+You will need to enter the command once for each crystal element or seal type you possess in your inventory.
 
 If you wish to test this addon before using it, you may edit line 33 in the CrystalTrader.lua file.
 
@@ -32,7 +37,7 @@ to
 	exampleOnly = true
 	
 This will cause the addon to print the commands that will be issued to the windower console.
-When you are ready to allow the addon to enter commands for you, change the 'true' back to 'false' and visit an Ephemeral Moogle.
+When you are ready to allow the addon to enter commands for you, change the 'true' back to 'false' and visit an Ephemeral Moogle or Shami.
 
 
 Installation
@@ -52,7 +57,7 @@ I would also recommend having the addon TradeNPC load automatically by adding
 Additional Information and Disclaimer
 -------------------------------------
 
-Crystal Trader only scans your inventory for the elemental crystals and clusters then enters a command that will be used by the TradeNPC addon.
+Crystal Trader only scans your inventory for elemental crystals, clusters, seals, and crests, then enters a command that will be used by the TradeNPC addon.
 No other actions are carried out. This addon will not function if you do not have the TradeNPC addon loaded and working.
 
 I am an amateur programmer and have never tried anything with LUA until now. Please feel free to modify/change/steal any of the code.
@@ -61,7 +66,7 @@ If you end up making this addon better, please let me know!
 
 
 Version History
-
+---------------
 v1.0.0.0
 2018.07.05
 	Initial Release
@@ -70,3 +75,9 @@ v1.0.0.1
 2018.07.08
 	Changes to ensure the script obeys the 8-slot trade limit
 	
+v1.1.0
+2018.07.10
+	Versioning change
+	Added seal and crest trading
+		If Shami in Port Jeuno is the target of the 'ctr' command, the addon will switch to Seal trading mode
+	The user will be notified if there is no valid target and no trade attempt will be made if one is not present
