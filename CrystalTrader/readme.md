@@ -67,17 +67,17 @@ If you end up making this addon better, please let me know!
 
 Version History
 ---------------
-v1.0.0.0
-2018.07.05
-* Initial Release
-	
-v1.0.0.1
-2018.07.08
-* Changes to ensure the script obeys the 8-slot trade limit
-	
 v1.1.0
 2018.07.10
 * Versioning change
 * Added seal and crest trading
 	* If Shami in Port Jeuno is the target of the 'ctr' command, the addon will switch to Seal trading mode
 * The user will be notified if there is no valid target and no trade attempt will be made if one is not present
+
+v1.0.0.1
+2018.07.08
+* Changes to ensure the script obeys the 8-slot trade limit
+
+v1.0.0.0
+2018.07.05
+* Initial Release
