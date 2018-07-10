@@ -30,7 +30,7 @@ _addon.author = 'Valok@Asura'
 _addon.version = '1.1.0'
 _addon.command = 'ctr'
 
-exampleOnly = true
+exampleOnly = false
 
 windower.register_event('addon command', function(...)
 	-- Table of the elemental crystals/clusters, their itemIDs, quantities, and stack count in the player inventory
