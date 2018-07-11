@@ -67,6 +67,11 @@ If you end up making this addon better, please let me know!
 
 Version History
 ---------------
+v1.1.1
+2018.07.11
+* Addon will skip the conversation with the target after trading
+* Corrected logic to determine the number of crystal trades that will need to be made to empty the player inventory
+
 v1.1.0
 2018.07.10
 * Versioning change

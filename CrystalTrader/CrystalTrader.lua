@@ -27,10 +27,11 @@ For more information, please refer to <http://unlicense.org/>
 
 _addon.name = 'Crystal Trader'
 _addon.author = 'Valok@Asura'
-_addon.version = '1.1.0'
+_addon.version = '1.1.1'
 _addon.command = 'ctr'
 
 exampleOnly = false
+textSkipTimer = 1
 
 windower.register_event('addon command', function(...)
 	-- Table of the elemental crystals/clusters, their itemIDs, quantities, and stack count in the player inventory
@@ -99,24 +100,33 @@ windower.register_event('addon command', function(...)
 	for i = 1, #idTable do
 		for k, v in ipairs(inventory) do
 			if v.id == idTable[i][1] then
-				idTable[i][3] = idTable[i][3] + v.count
-				idTable[i][4] = idTable[i][4] + 1
+				idTable[i][3] = idTable[i][3] + v.count -- Updates the total number of items of each type
+				idTable[i][4] = idTable[i][4] + 1 -- Updates the total number of stacks of each type
 			end
 		end
 	end
 	
 	local numTrades = 0 -- Number of times //ctr needs to be run to empty the player inventory
+	local availableTradeSlots = 8
 
-	for i = 1, #idTable do
-		if idTable[i][4] > 0 then
-			numTrades = numTrades + math.ceil(idTable[i][4] / 8)
+	if tableType == 'Crystals' then
+		for i = 1, 8 do
+			if idTable[i][4] > 0 or idTable[i + 8][4] > 0 then
+				numTrades = numTrades + math.ceil((idTable[i][4] + idTable[i + 8][4]) / 8)
+			end
+		end
+	elseif tableType == 'Seals' then
+		for i = 1, #idTable do
+			if idTable[i][4] > 0 then
+				numTrades = numTrades + math.ceil(idTable[i][4] / 8)
+			end
 		end
 	end
 
 	-- Prepare and send command through TradeNPC if there are trades to be made
 	if numTrades > 0 then
 		local tradeString = ''
-		local availableTradeSlots = 8
+		availableTradeSlots = 8
 		--numTrades = numTrades - 1
 		
 		if tableType == 'Crystals' then
@@ -126,8 +136,8 @@ windower.register_event('addon command', function(...)
 				availableTradeSlots = 8
 				
 				if idTable[i][3] > 0 then
-					availableTradeSlots = math.max(1, availableTradeSlots - idTable[i][4])
 					tradeString = tradeString..math.min(availableTradeSlots * 12, idTable[i][3])..' "'..idTable[i][2]..'"'
+					availableTradeSlots = math.max(0, availableTradeSlots - idTable[i][4])
 				end
 				
 				if availableTradeSlots > 0 and idTable[i + 8][3] > 0 then
@@ -142,6 +152,7 @@ windower.register_event('addon command', function(...)
 					else
 						windower.send_command('input '..tradeString)
 						windower.add_to_chat(8, 'Crystal Trader: '..(numTrades - 1)..' trades remaining')
+						textSkipTimer = os.time()
 						break
 					end
 				end
@@ -164,6 +175,7 @@ windower.register_event('addon command', function(...)
 					else
 						windower.send_command('input '..tradeString)
 						windower.add_to_chat(8, 'Crystal Trader: '..(numTrades - 1)..' trades remaining')
+						textSkipTimer = os.time()
 						break
 					end
 				end
@@ -176,4 +188,23 @@ windower.register_event('addon command', function(...)
 			windower.add_to_chat(8, "Crystal Trader - No seals in inventory")
 		end
 	end
+end)
+ 
+windower.register_event('incoming text', function(original, modified, mode)
+	-- Allow the addon to skip the conversation text for up to 10 seconds after the trade
+	if os.time() - textSkipTimer > 10 then
+		return
+	end
+	
+	local target = windower.ffxi.get_mob_by_target('t')
+	
+	if not target then return
+		false
+	end
+	
+	if mode == 150 or mode == 151 then
+		modified = modified:gsub(string.char(0x7F, 0x31), '')
+	end
+	
+	return modified
 end)
