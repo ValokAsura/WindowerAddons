@@ -62,8 +62,13 @@ windower.register_event('addon command', function(...)
 		{2957, "sacred kindred's crest", 0, 0},
 	}
 	
+	local moatCarpIDs = {
+		{4401, "moat carp", 0, 0},
+	}
+	
 	local idTable = {}
 	local tableType = ''
+	local stackSize = 12
 	local target = windower.ffxi.get_mob_by_target('t')
 	
 	if not target then
@@ -83,6 +88,9 @@ windower.register_event('addon command', function(...)
 	elseif target.name == 'Ephemeral Moogle' or target.name == 'Waypoint' then
 		idTable = crystalIDs
 		tableType = 'Crystals'
+	elseif target.name == 'Joulet' or target.name == 'Gallijaux' then
+		idTable = moatCarpIDs
+		tableType = 'Moat Carp'
 	else
 		print('CrystalTrader: Invalid Target')
 		return
@@ -115,7 +123,7 @@ windower.register_event('addon command', function(...)
 				numTrades = numTrades + math.ceil((idTable[i][4] + idTable[i + 8][4]) / 8)
 			end
 		end
-	elseif tableType == 'Seals' then
+	elseif tableType == 'Seals' or tableType == 'Moat Carp' then
 		for i = 1, #idTable do
 			if idTable[i][4] > 0 then
 				numTrades = numTrades + math.ceil(idTable[i][4] / 8)
@@ -130,18 +138,20 @@ windower.register_event('addon command', function(...)
 		--numTrades = numTrades - 1
 		
 		if tableType == 'Crystals' then
+			stackSize = 12
+			
 			for i = 1, 8 do
 				-- Build the string that will be used as the command
 				tradeString = '//tradenpc '
 				availableTradeSlots = 8
 				
 				if idTable[i][3] > 0 then
-					tradeString = tradeString..math.min(availableTradeSlots * 12, idTable[i][3])..' "'..idTable[i][2]..'"'
+					tradeString = tradeString..math.min(availableTradeSlots * stackSize, idTable[i][3])..' "'..idTable[i][2]..'"'
 					availableTradeSlots = math.max(0, availableTradeSlots - idTable[i][4])
 				end
 				
 				if availableTradeSlots > 0 and idTable[i + 8][3] > 0 then
-					tradeString = tradeString..' '..math.min(availableTradeSlots * 12, idTable[i + 8][3])..' "'..idTable[i + 8][2]..'"'
+					tradeString = tradeString..' '..math.min(availableTradeSlots * stackSize, idTable[i + 8][3])..' "'..idTable[i + 8][2]..'"'
 				end
 				
 				if tradeString ~= '//tradenpc ' then
@@ -157,14 +167,20 @@ windower.register_event('addon command', function(...)
 					end
 				end
 			end
-		elseif tableType == 'Seals' then
-			for i = 1, 5 do
+		elseif tableType == 'Seals' or tableType == 'Moat Carp' then
+			if tableType == 'Seals' then
+				stackSize = 99
+			elseif tableType == 'MoatCarp' then
+				stackSize = 12
+			end
+			
+			for i = 1, #idTable do
 				tradeString = '//tradenpc '
 				availableTradeSlots = 8
 				
 				if idTable[i][3] > 0 then
 					availableTradeSlots = math.max(1, availableTradeSlots - idTable[i][4])
-					tradeString = tradeString..math.min(availableTradeSlots * 99, idTable[i][3])..' "'..idTable[i][2]..'"'
+					tradeString = tradeString..math.min(availableTradeSlots * stackSize, idTable[i][3])..' "'..idTable[i][2]..'"'
 				end
 				
 				if tradeString ~= '//tradenpc ' then
@@ -186,6 +202,8 @@ windower.register_event('addon command', function(...)
 			windower.add_to_chat(8, "Crystal Trader - No crystals in inventory")
 		elseif tableType == 'Seals' then
 			windower.add_to_chat(8, "Crystal Trader - No seals in inventory")
+		elseif tableType == 'Moat Carp' then
+			windower.add_to_chat(8, "Crystal Trader - No moat carp in inventory")
 		end
 	end
 end)

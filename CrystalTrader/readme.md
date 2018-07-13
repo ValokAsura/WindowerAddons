@@ -14,6 +14,8 @@ This allows you to automatically trade stacks of similar clusters and crystals t
 In v.1.1.0, the ability to trade seals and crests to Shami in Port Jeuno was added. The addon will automatically switch modes if Shami is your target.
 The 5 valid seals are: Beastmen's Seal, Kindred's Seal, Kindred's Crest, High Kindred's Crest, Sacred Kindred's Crest
 
+In v.1.1.2, the ability to trade moat carp to Joulet or Gallijaux was added
+
 
 Example
 -------
@@ -67,6 +69,10 @@ If you end up making this addon better, please let me know!
 
 Version History
 ---------------
+v1.1.2
+2018.07.12
+* Added Moat Carp trading to Joulet or Gallijaux in Port San d'Oria
+
 v1.1.1
 2018.07.11
 * Addon will skip the conversation with the target after trading
