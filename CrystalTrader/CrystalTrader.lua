@@ -27,7 +27,7 @@ For more information, please refer to <http://unlicense.org/>
 
 _addon.name = 'Crystal Trader'
 _addon.author = 'Valok@Asura'
-_addon.version = '1.1.1'
+_addon.version = '1.1.3'
 _addon.command = 'ctr'
 
 exampleOnly = false
@@ -63,7 +63,11 @@ windower.register_event('addon command', function(...)
 	}
 	
 	local moatCarpIDs = {
-		{4401, "moat carp", 0, 0},
+		{4401, 'moat carp', 0, 0},
+	}
+	
+	local copperVoucherIDs = {
+		{8711, 'copper voucher', 0, 0},
 	}
 	
 	local idTable = {}
@@ -91,6 +95,9 @@ windower.register_event('addon command', function(...)
 	elseif target.name == 'Joulet' or target.name == 'Gallijaux' then
 		idTable = moatCarpIDs
 		tableType = 'Moat Carp'
+	elseif target.name == 'Isakoth' or target.name == 'Rolandienne' or target.name == 'Fhelm Jobeizat' or target.name == 'Eternal Flame' then
+		idTable = copperVoucherIDs
+		tableType = 'Copper Vouchers'
 	else
 		print('CrystalTrader: Invalid Target')
 		return
@@ -123,7 +130,7 @@ windower.register_event('addon command', function(...)
 				numTrades = numTrades + math.ceil((idTable[i][4] + idTable[i + 8][4]) / 8)
 			end
 		end
-	elseif tableType == 'Seals' or tableType == 'Moat Carp' then
+	elseif tableType == 'Seals' or tableType == 'Moat Carp' or tableType == 'Copper Vouchers' then
 		for i = 1, #idTable do
 			if idTable[i][4] > 0 then
 				numTrades = numTrades + math.ceil(idTable[i][4] / 8)
@@ -167,10 +174,10 @@ windower.register_event('addon command', function(...)
 					end
 				end
 			end
-		elseif tableType == 'Seals' or tableType == 'Moat Carp' then
-			if tableType == 'Seals' then
+		elseif tableType == 'Seals' or tableType == 'Moat Carp' or tableType == 'Copper Vouchers' then
+			if tableType == 'Seals' or tableType == 'Copper Vouchers' then
 				stackSize = 99
-			elseif tableType == 'MoatCarp' then
+			elseif tableType == 'Moat Carp' then
 				stackSize = 12
 			end
 			
@@ -198,13 +205,7 @@ windower.register_event('addon command', function(...)
 			end
 		end
 	else
-		if tableType == 'Crystals' then
-			windower.add_to_chat(8, "Crystal Trader - No crystals in inventory")
-		elseif tableType == 'Seals' then
-			windower.add_to_chat(8, "Crystal Trader - No seals in inventory")
-		elseif tableType == 'Moat Carp' then
-			windower.add_to_chat(8, "Crystal Trader - No moat carp in inventory")
-		end
+		windower.add_to_chat(8, "Crystal Trader - No "..tableType.." in inventory")
 	end
 end)
  
