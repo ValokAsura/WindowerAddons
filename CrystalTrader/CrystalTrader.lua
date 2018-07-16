@@ -25,7 +25,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org/>
 ]]
 
-_addon.name = 'Crystal Trader'
+_addon.name = 'Crystal Trader - Deprecated'
 _addon.author = 'Valok@Asura'
 _addon.version = '1.1.3'
 _addon.command = 'ctr'

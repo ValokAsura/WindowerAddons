@@ -71,6 +71,8 @@ If you end up making this addon better, please let me know!
 
 Version History
 ---------------
+* Crystal Trader has been replaced with QuickTrade and will no longer be updated.
+
 v1.1.3
 2018.07.13
 * Added Copper Voucher trading to Isakoth, Rolandienne, Fhelm Jobeizat, and Eternal Flame
