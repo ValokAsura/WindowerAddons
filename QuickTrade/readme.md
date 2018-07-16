@@ -8,6 +8,8 @@ TradeNPC can be found here: https://github.com/Ivaar/Windower-addons
 What does this addon do?
 ------------------------
 
+Example Video: https://youtu.be/TVFWjjP_Dh0
+
 QuickTrade searches your inventory for items that are tradeable or storable with certain NPCs, then sends a command to be used by TradeNPC.
 This allows you to automatically trade multiple stacks of items repeatedly with a command instead of using the much slower trade menu.
 QuickTrade will inform you of how many times you need to enter //qtr in order to complete all available trades.
