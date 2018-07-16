@@ -25,7 +25,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org/>
 ]]
 
-_addon.name = 'Quick Trader'
+_addon.name = 'QuickTrade'
 _addon.author = 'Valok@Asura'
 _addon.version = '1.0.0'
 _addon.command = 'qtr'
@@ -119,7 +119,7 @@ windower.register_event('addon command', function(...)
 	local target = windower.ffxi.get_mob_by_target('t')
 	
 	if not target then
-		print('QuickTrader: No target selected')
+		print('QuickTrade: No target selected')
 		return
 	end
 
@@ -132,7 +132,7 @@ windower.register_event('addon command', function(...)
 	end
 
 	if #idTable == 0 or tableType == '' then
-		print('QuickTrader: Invalid target')
+		print('QuickTrade: Invalid target')
 		return
 	end
 
@@ -145,7 +145,7 @@ windower.register_event('addon command', function(...)
 	local inventory = windower.ffxi.get_items(0)
 	
 	if not inventory then
-		print('QuickTrader: Unable to read inventory')
+		print('QuickTrade: Unable to read inventory')
 		return
 	end
 	
@@ -216,11 +216,11 @@ windower.register_event('addon command', function(...)
 
 		if tradeString ~= '//tradenpc ' then
 			if numTrades - 1 == 0 then
-				windower.add_to_chat(8, 'QuickTrader: Trading Complete')
+				windower.add_to_chat(8, 'QuickTrade: Trading Complete')
 			elseif numTrades - 1 == 1 then
-				windower.add_to_chat(8, 'QuickTrader: '..(numTrades - 1)..' trade remaining')
+				windower.add_to_chat(8, 'QuickTrade: '..(numTrades - 1)..' trade remaining')
 			else
-				windower.add_to_chat(8, 'QuickTrader: '..(numTrades - 1)..' trades remaining')
+				windower.add_to_chat(8, 'QuickTrade: '..(numTrades - 1)..' trades remaining')
 			end
 			
 			if exampleOnly then
@@ -231,7 +231,7 @@ windower.register_event('addon command', function(...)
 			end
 		end
 	else
-		windower.add_to_chat(8, "QuickTrader - No "..tableType.." in inventory")
+		windower.add_to_chat(8, "QuickTrade - No "..tableType.." in inventory")
 	end
 end)
  

@@ -8,93 +8,78 @@ TradeNPC can be found here: https://github.com/Ivaar/Windower-addons
 What does this addon do?
 ------------------------
 
-Crystal Trader searches your inventory for standard elemental crystals and clusters, then prepares a command to be used by TradeNPC.
-This allows you to automatically trade stacks of similar clusters and crystals to the Ephemeral Moogles in the crafting guilds.
+QuickTrade searches your inventory for items that are tradeable or storable with certain NPCs, then sends a command to be used by TradeNPC.
+This allows you to automatically trade multiple stacks of items repeatedly with a command instead of using the much slower trade menu.
+QuickTrade will inform you of how many times you need to enter //qtr in order to complete all available trades.
+For up to 10 seconds after the trade is complete, it will skip any conversations with the NPC.
 
-In v.1.1.0, the ability to trade seals and crests to Shami in Port Jeuno was added. The addon will automatically switch modes if Shami is your target.
-The 5 valid seals are: Beastmen's Seal, Kindred's Seal, Kindred's Crest, High Kindred's Crest, Sacred Kindred's Crest
+Valid trades are as follow:
 
-In v.1.1.2, the ability to trade Moat Carp to Joulet or Gallijaux was added
-
-In v.1.1.3, the ability to trade Copper Vouchers was added
+* Elemental Crystals and Clusters: Trade with Ephemeral Moogles for storage or with Waypoints to accumulate Kinetic Units.
+* Seals and Crests: Trade with Shami in Port Jeuno to store your various seals and crests.
+* Moat Carp: Trade with Joulet or Gallijaux in Port San d'Oria for the Lu Shang's Rod quest.
+* Copper Vouchers: Trade with Isakoth, Rolandienne, Fhelm Jobeizat, or Eternal Flame to store your vouchers.
+* Rem's Tale Chapters: Trade with Monisette in Port Jeuno to store your chapters.
+* UNTESTED - Mellidopt Wings: Trade with the ??? in Yorcia Weald
+* UNTESTED - Salvage Plans: Trade with Mrohk Sahjuuli in Aht Urhgan Whitegate to store your plans.
+* UNTESTED - Alexandrite: Trade with Paparoon in Nashmau for the quest 'Duties, Tasks, and Deeds.'
 
 
 Example
 -------
 
 You have 3 stacks of Fire Crystals, 1 stack of Ice Crystals, and 2 Fire Clusters in your inventory that you would like to store.
-Travel to and target one of the Ephemeral Moogles you would like to trade to.
-In the chat window, enter '//ctr' without the quotes and press enter, or type 'ctr' in the console
+Travel to and target one of the Ephemeral Moogles or Waypoints you would like to trade to.
+In the chat window, enter '//qtr' without the quotes and press enter, or enter 'qtr' in the console.
 The addon will cause TradeNPC to instantly trade all 3 stacks of Fire Crystals and the 2 Fire Clusters with one command.
-After you wait for the moogle to do his thing, target the moogle again and re-enter the command.
+After waiting a few seconds, target the moogle or Waypoint again and re-enter the command.
 The addon will then cause TradeNPC to instantly trade the stack of Ice Crystals.
+If you run the command again, you will be informed that you have no more items to trade.
 
-The behavior is similiar when trading seals or crests to Shami in Port Jeuno
+The behavior is similiar when trading other valid items with valid NPCs.
 
-You will need to enter the command once for each crystal element or seal type you possess in your inventory.
+You will need to enter the command once for each crystal element or item type you possess in your inventory.
+This seems to be a game limitation since most NPCs accept only one type of item at a time.
 
-If you wish to test this addon before using it, you may edit line 33 in the CrystalTrader.lua file.
+If you wish to test this addon before having it perform a trade, you may edit line 33 in the QuickTrade.lua file.
 
 Change
 	exampleOnly = false
 to
 	exampleOnly = true
 	
-This will cause the addon to print the commands that will be issued to the windower console.
-When you are ready to allow the addon to enter commands for you, change the 'true' back to 'false' and visit an Ephemeral Moogle or Shami.
+This will cause the addon to print the command to be issued in the windower console.
+When you are ready to allow the addon to trade for you, change the 'true' back to 'false'.
 
 
 Installation
 ------------
 
-Browse to your Windower\addons folder and create a new folder inside called "CrystalTrader"
-Place CrystalTrader.lua in this new folder.
-Load the addon by accessing the console from within FFXI and typing 'lua l CrystalTrader'
+Browse to your Windower\addons folder and create a new folder inside called "QuickTrade"
+Place QuickTrade.lua in this new folder.
+Load the addon by accessing the console from within FFXI and typing 'lua l QuickTrade'
 
 If you want this addon to be loaded automatically every time you launch the game,
-add 'lua l CrystalTrader' to the bottom of the file Windower\scripts\init.txt.
+add 'lua l QuickTrade' to the bottom of the file Windower\scripts\init.txt.
 
 I would also recommend having the addon TradeNPC load automatically by adding
 'lua l TradeNPC' to your init.txt.
+
+If TradeNPC is not loaded when using this addon, the command will be issued but nothing will happen.
 
 
 Additional Information and Disclaimer
 -------------------------------------
 
-Crystal Trader only scans your inventory for elemental crystals, clusters, seals, and crests, then enters a command that will be used by the TradeNPC addon.
+QuickTrade only scans your inventory for the items mentioned above then enters a command that will be used by the TradeNPC addon.
 No other actions are carried out. This addon will not function if you do not have the TradeNPC addon loaded and working.
 
-I am an amateur programmer and have never tried anything with LUA until now. Please feel free to modify/change/steal any of the code.
+I am an amateur programmer and have only recently tried LUA. Please feel free to modify/change/steal any of the code.
 If you end up making this addon better, please let me know!
-
 
 
 Version History
 ---------------
-v1.1.3
-2018.07.13
-* Added Copper Voucher trading to Isakoth, Rolandienne, Fhelm Jobeizat, and Eternal Flame
-
-v1.1.2
-2018.07.12
-* Added Moat Carp trading to Joulet or Gallijaux in Port San d'Oria
-
-v1.1.1
-2018.07.11
-* Addon will skip the conversation with the target after trading
-* Corrected logic to determine the number of crystal trades that will need to be made to empty the player inventory
-
-v1.1.0
-2018.07.10
-* Versioning change
-* Added seal and crest trading
-	* If Shami in Port Jeuno is the target of the 'ctr' command, the addon will switch to Seal trading mode
-* The user will be notified if there is no valid target and no trade attempt will be made if one is not present
-
-v1.0.0.1
-2018.07.08
-* Changes to ensure the script obeys the 8-slot trade limit
-
-v1.0.0.0
-2018.07.05
+v1.0.0
+2018.07.16
 * Initial Release
