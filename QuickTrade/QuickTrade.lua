@@ -27,7 +27,7 @@ For more information, please refer to <http://unlicense.org/>
 
 _addon.name = 'QuickTrade'
 _addon.author = 'Valok@Asura'
-_addon.version = '1.0.0'
+_addon.version = '1.0.1'
 _addon.command = 'qtr'
 
 exampleOnly = false
@@ -94,7 +94,11 @@ windower.register_event('addon command', function(...)
 	}
 
 	local alexandriteIDs = {
-		{id = 2488, name = 'Alexandrite', count = 0, stacks = 0, stacksize = 99},
+		{id = 2488, name = 'alexandrite', count = 0, stacks = 0, stacksize = 99},
+	}
+
+	local spGobbieKeyIDs = {
+		{id = 8973, name = 'special gobbiedial key', count = 0, stacks = 0, stacksize = 99},
 	}
 
 	local npcTable = {
@@ -111,6 +115,17 @@ windower.register_event('addon command', function(...)
 		{name = '???', idTable = mellidoptWingIDs, tableType = 'Mellidopt Wings'},
 		{name = 'Mrohk Sahjuuli', idTable = salvagePlanIDs, tableType = 'Salvage Plans'},
 		{name = 'Paparoon', idTable = alexandriteIDs, tableType = 'Alexandrite'},
+		{name = 'Mystrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
+		{name = 'Habitox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
+		{name = 'Bountibox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
+		{name = 'Specilox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
+		{name = 'Arbitrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
+		{name = 'Funtrox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
+		{name = 'Priztrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
+		{name = 'Sweepstox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
+		{name = 'Wondrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
+		{name = 'Rewardox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
+		{name = 'Winrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
 	}
 	
 	local idTable = {}
@@ -168,8 +183,8 @@ windower.register_event('addon command', function(...)
 				numTrades = numTrades + math.ceil((idTable[i].stacks + idTable[i + 8].stacks) / 8)
 			end
 		end
-	elseif tableType == 'Seals' or tableType == 'Moat Carp' or tableType == 'Copper Vouchers' or tableType == "Rem's Tale"
-			or tableType == 'Mellidopt Wings' or tableType == 'Salvage Plans' then
+	else--if tableType == 'Seals' or tableType == 'Moat Carp' or tableType == 'Copper Vouchers' or tableType == "Rem's Tale"
+		--		or tableType == 'Mellidopt Wings' or tableType == 'Salvage Plans' or tableType == 'Alexandrite' then
 		for i = 1, #idTable do
 			if idTable[i].stacks > 0 then
 				numTrades = numTrades + math.ceil(idTable[i].stacks / 8)
@@ -201,6 +216,9 @@ windower.register_event('addon command', function(...)
 					break
 				end
 			end
+		elseif tableType == 'Special Gobbiedial Keys' then
+			tradeString = '//tradenpc  1 "'..idTable[1].name..'"'
+			numTrades = idTable[1].count
 		else
 			for i = 1, #idTable do
 				tradeString = '//tradenpc '

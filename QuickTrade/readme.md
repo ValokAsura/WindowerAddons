@@ -25,6 +25,7 @@ Valid trades are as follow:
 * UNTESTED - Mellidopt Wings: Trade with the ??? in Yorcia Weald
 * UNTESTED - Salvage Plans: Trade with Mrohk Sahjuuli in Aht Urhgan Whitegate to store your plans.
 * UNTESTED - Alexandrite: Trade with Paparoon in Nashmau for the quest 'Duties, Tasks, and Deeds.'
+* Special Gobbie Keys: Trade with one of the various goblins throughout Vana'diel.
 
 
 Example
@@ -82,6 +83,11 @@ If you end up making this addon better, please let me know!
 
 Version History
 ---------------
+v1.1.0
+2018.07.20
+* Bugfix - Alexandrite should be detected properly
+* Added Special Gobbiedial Keys
+
 v1.0.0
 2018.07.16
 * Initial Release
