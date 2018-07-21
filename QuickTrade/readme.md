@@ -26,6 +26,14 @@ Valid trades are as follow:
 * UNTESTED - Salvage Plans: Trade with Mrohk Sahjuuli in Aht Urhgan Whitegate to store your plans.
 * UNTESTED - Alexandrite: Trade with Paparoon in Nashmau for the quest 'Duties, Tasks, and Deeds.'
 * Special Gobbie Keys: Trade with one of the various goblins throughout Vana'diel.
+* Zinc Ore: Trade with Talib in Port Bastok for the repeatable quest 'Shady Business.'
+* Yagudo Necklaces: Trade with Nanaa Mihgo in Windurst Woods for the repeeatable quest 'Mihgo's Amigo.'
+* Cornettes: Trade with Yoran-Oran in Windurst Walls for the repeatable quest 'Manragora-Mad.'
+	* The other 4 items that Yoran-Oran accepts are also supported.
+* La Theine Cabbage, Millioncorn, Boyahda Moss: Trade with Melyon in Selbina for the repeatable quest 'Only the Best.'
+* UNTESTED - Soul Plates: Trade with Sanraku in Aht Urhgan Whitegate in exchange for Zeni.
+	* Currently set to trade only 1 at a time. This can be changed if needed.
+
 
 
 Example
@@ -83,6 +91,10 @@ If you end up making this addon better, please let me know!
 
 Version History
 ---------------
+v1.2.0
+2018.307.2018
+* Added Zinc Ore, Yagudo Necklaces, Mandragora-Mad items, Only the Best items, and Soul Plates
+
 v1.1.0
 2018.07.20
 * Bugfix - Alexandrite should be detected properly

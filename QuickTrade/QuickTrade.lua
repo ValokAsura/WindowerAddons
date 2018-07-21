@@ -27,7 +27,7 @@ For more information, please refer to <http://unlicense.org/>
 
 _addon.name = 'QuickTrade'
 _addon.author = 'Valok@Asura'
-_addon.version = '1.0.1'
+_addon.version = '1.2.0'
 _addon.command = 'qtr'
 
 exampleOnly = false
@@ -101,6 +101,32 @@ windower.register_event('addon command', function(...)
 		{id = 8973, name = 'special gobbiedial key', count = 0, stacks = 0, stacksize = 99},
 	}
 
+	local zincOreIDs = {
+		{id = 642, name = 'zinc ore', count = 0, stacks = 0, stacksize = 12},
+	}
+
+	local yagudoNecklaceIDs = {
+		{id = 498, name = 'yagudo necklace', count = 0, stacks = 0, stacksize = 12},
+	}
+
+	local mandragoraMadIDs = {
+		{id = 17344, name = 'cornette', count = 0, stacks = 0, stacksize = 1},
+		{id = 4369, name = 'four-leaf mandragora bud', count = 0, stacks = 0, stacksize = 1},
+		{id = 1150, name = 'snobby letter', count = 0, stacks = 0, stacksize = 1},
+		{id = 1154, name = 'three-leaf mandragora bud', count = 0, stacks = 0, stacksize = 1},
+		{id = 934, name = 'pinch of yuhtunga sulfur', count = 0, stacks = 0, stacksize = 1},
+	}
+
+	local onlyTheBestIDs = {
+		{id = 4366, name = 'la theine cabbage', count = 0, stacks = 0, stacksize = 12},
+		{id = 629, name = 'millioncorn', count = 0, stacks = 0, stacksize = 12},
+		{id = 919, name = 'boyahda moss', count = 0, stacks = 0, stacksize = 12},
+	}
+
+	local soulPlateIDs = {
+		{id = 2477, name = 'soul plate', count = 0, stacks = 0, stacksize = 1}, -- Can only trade 10 per Vana'diel day
+	}
+
 	local npcTable = {
 		{name = 'Shami', idTable = sealIDs, tableType = 'Seals'},
 		{name = 'Ephemeral Moogle', idTable = crystalIDs, tableType = 'Crystals'},
@@ -126,6 +152,11 @@ windower.register_event('addon command', function(...)
 		{name = 'Wondrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
 		{name = 'Rewardox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
 		{name = 'Winrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
+		{name = 'Talib', idTable = zincOreIDs, tableType = 'Zinc Ore'},
+		{name = 'Nanaa Mihgo', idTable = yagudoNecklaceIDs, tableType = 'Yagudo Necklaces'},
+		{name = 'Yoran-Oran', idTable = mandragoraMadIDs, tableType = 'Mandragora Mad Items'},
+		{name = 'Melyon', idTable = onlyTheBestIDs, tableType = 'Only the Best Items'},
+		{name = 'Sanraku', idTable = soulPlateIDs, tableType = 'Soul Plates'},
 	}
 	
 	local idTable = {}
@@ -183,8 +214,19 @@ windower.register_event('addon command', function(...)
 				numTrades = numTrades + math.ceil((idTable[i].stacks + idTable[i + 8].stacks) / 8)
 			end
 		end
-	else--if tableType == 'Seals' or tableType == 'Moat Carp' or tableType == 'Copper Vouchers' or tableType == "Rem's Tale"
-		--		or tableType == 'Mellidopt Wings' or tableType == 'Salvage Plans' or tableType == 'Alexandrite' then
+	elseif tableType == 'Zinc Ore' or tableType == 'Yagudo Necklaces' then
+		numTrades = math.floor(idTable[1].count / 4)
+	elseif tableType == 'Mandragora Mad Items' then
+		for i = 1, #idTable do
+			numTrades = numTrades + idTable[i].count
+		end
+	elseif tableType == 'Only the Best Items' then
+		numTrades = numTrades + math.floor(idTable[1].count / 5)
+		numTrades = numTrades + math.floor(idTable[2].count / 3)
+		numTrades = numTrades + idTable[3].count
+	elseif tableType == 'Special Gobbiedial Keys' or tableType == 'Soul Plates' then
+		numTrades = idTable[1].count
+	else
 		for i = 1, #idTable do
 			if idTable[i].stacks > 0 then
 				numTrades = numTrades + math.ceil(idTable[i].stacks / 8)
@@ -192,9 +234,13 @@ windower.register_event('addon command', function(...)
 		end
 	end
 
+	if exampleOnly then
+		print(numTrades..' total trades')
+	end
+
 	-- Prepare and send command through TradeNPC if there are trades to be made
 	if numTrades > 0 then
-		local tradeString = ''
+		local tradeString = '//tradenpc '
 		availableTradeSlots = 8
 		
 		if tableType == 'Crystals' then
@@ -216,9 +262,40 @@ windower.register_event('addon command', function(...)
 					break
 				end
 			end
-		elseif tableType == 'Special Gobbiedial Keys' then
+		elseif tableType == 'Special Gobbiedial Keys' or tableType == 'Soul Plates' then -- 1 item at a time
 			tradeString = '//tradenpc  1 "'..idTable[1].name..'"'
-			numTrades = idTable[1].count
+		elseif tableType == 'Zinc Ore' or tableType == 'Yagudo Necklaces' then -- 4 items at a time
+			if idTable[1].count >= 4 then
+				tradeString = '//tradenpc 4 "'..idTable[1].name..'"'
+			end
+		elseif tableType == 'Mandragora Mad Items' then
+			for i = 1, #idTable do
+				tradeString = '//tradenpc '
+
+				if idTable[i].count > 0 then
+					tradeString = tradeString..'1 "'..idTable[i].name..'"'
+					break
+				end
+			end
+		elseif tableType == 'Only the Best Items' then
+			for i = 1, #idTable do
+				tradeString = '//tradenpc '
+
+				if idTable[1].count >= 5 then
+					tradeString = tradeString..'5 "'..idTable[1].name..'"'
+					break
+				end
+
+				if idTable[2].count >= 3 then
+					tradeString = tradeString..'3 "'..idTable[2].name..'"'
+					break
+				end
+
+				if idTable[3].count > 0 then
+					tradeString = tradeString..'1 "'..idTable[3].name..'"'
+					break
+				end
+			end
 		else
 			for i = 1, #idTable do
 				tradeString = '//tradenpc '
@@ -244,8 +321,8 @@ windower.register_event('addon command', function(...)
 			if exampleOnly then
 				print(tradeString)
 			else
-				windower.send_command('input '..tradeString)
 				textSkipTimer = os.time()
+				windower.send_command('input '..tradeString)
 			end
 		end
 	else
