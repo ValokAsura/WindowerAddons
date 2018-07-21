@@ -33,6 +33,8 @@ Valid trades are as follow:
 * La Theine Cabbage, Millioncorn, Boyahda Moss: Trade with Melyon in Selbina for the repeatable quest 'Only the Best.'
 * UNTESTED - Soul Plates: Trade with Sanraku in Aht Urhgan Whitegate in exchange for Zeni.
 	* Currently set to trade only 1 at a time. This can be changed if needed.
+* UNTESTED - JSE Capes: Trade with an A.M.A.N. Reclaimer to trade a single cape, or trade with Makel-Pakel in the Celennia Memorial Library to trade 3 of the same cape.
+	* Currently set to NOT skip dialogue when trading JSE capes. Make sure your inventory does not have any capes that you want to keep.
 
 
 
@@ -91,8 +93,12 @@ If you end up making this addon better, please let me know!
 
 Version History
 ---------------
+v1.3.0
+2018.07.2018
+* Added JSE Capes: 1x to the A.M.A.N. Reclaimers, 3x to Makel-Pakel
+
 v1.2.0
-2018.307.2018
+2018.07.2018
 * Added Zinc Ore, Yagudo Necklaces, Mandragora-Mad items, Only the Best items, and Soul Plates
 
 v1.1.0

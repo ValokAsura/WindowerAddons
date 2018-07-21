@@ -27,7 +27,7 @@ For more information, please refer to <http://unlicense.org/>
 
 _addon.name = 'QuickTrade'
 _addon.author = 'Valok@Asura'
-_addon.version = '1.2.0'
+_addon.version = '1.3.0'
 _addon.command = 'qtr'
 
 exampleOnly = false
@@ -127,6 +127,31 @@ windower.register_event('addon command', function(...)
 		{id = 2477, name = 'soul plate', count = 0, stacks = 0, stacksize = 1}, -- Can only trade 10 per Vana'diel day
 	}
 
+	local jseCapeIDs = {
+		{id = 28617, name = "mauler's mantle", count = 0, stacks = 0, stacksize = 1},
+		{id = 28618, name = "anchoret's mantle", count = 0, stacks = 0, stacksize = 1},
+		{id = 28619, name = 'mending cape', count = 0, stacks = 0, stacksize = 1},
+		{id = 28620, name = 'bane cape', count = 0, stacks = 0, stacksize = 1},
+		{id = 28621, name = 'ghostfyre cape', count = 0, stacks = 0, stacksize = 1},
+		{id = 28622, name = 'canny cape', count = 0, stacks = 0, stacksize = 1},
+		{id = 28623, name = 'weard mantle', count = 0, stacks = 0, stacksize = 1},
+		{id = 28624, name = 'niht mantle', count = 0, stacks = 0, stacksize = 1},
+		{id = 28625, name = "pastoralist's mantle", count = 0, stacks = 0, stacksize = 1},
+		{id = 28626, name = "rhapsode's cape", count = 0, stacks = 0, stacksize = 1},
+		{id = 28627, name = 'lutian cape', count = 0, stacks = 0, stacksize = 1},
+		{id = 28628, name = 'takaha mantle', count = 0, stacks = 0, stacksize = 1},
+		{id = 28629, name = 'yokaze mantle', count = 0, stacks = 0, stacksize = 1},
+		{id = 28630, name = 'updraft mantle', count = 0, stacks = 0, stacksize = 1},
+		{id = 28631, name = 'conveyance cape', count = 0, stacks = 0, stacksize = 1},
+		{id = 28632, name = 'cornflower cape', count = 0, stacks = 0, stacksize = 1},
+		{id = 28633, name = "gunslinger's cape", count = 0, stacks = 0, stacksize = 1},
+		{id = 28634, name = 'dispersal mantle', count = 0, stacks = 0, stacksize = 1},
+		{id = 28635, name = 'toetapper mantle', count = 0, stacks = 0, stacksize = 1},
+		{id = 28636, name = "bookworm's cape", count = 0, stacks = 0, stacksize = 1},
+		{id = 28637, name = 'lifestream cape', count = 0, stacks = 0, stacksize = 1},
+		{id = 28638, name = "evasionist's cape", count = 0, stacks = 0, stacksize = 1},
+	}
+
 	local npcTable = {
 		{name = 'Shami', idTable = sealIDs, tableType = 'Seals'},
 		{name = 'Ephemeral Moogle', idTable = crystalIDs, tableType = 'Crystals'},
@@ -157,6 +182,8 @@ windower.register_event('addon command', function(...)
 		{name = 'Yoran-Oran', idTable = mandragoraMadIDs, tableType = 'Mandragora Mad Items'},
 		{name = 'Melyon', idTable = onlyTheBestIDs, tableType = 'Only the Best Items'},
 		{name = 'Sanraku', idTable = soulPlateIDs, tableType = 'Soul Plates'},
+		{name = 'A.M.A.N. Reclaimer', idTable = jseCapeIDs, tableType = 'JSE Capes'},
+		{name = 'Makel-Pakel', idTable = jseCapeIDs, tableType = 'JSE Capes x3'},
 	}
 	
 	local idTable = {}
@@ -177,15 +204,16 @@ windower.register_event('addon command', function(...)
 		end
 	end
 
+	-- FOR TESTING WITHOUT NPC PRESENT!!!!!!!!!!!!!
+	--idTable = jseCapeIDs
+	--tableType = 'JSE Capes x3'
+	--exampleOnly = true
+	-- FOR TESTING WITHOUT NPC PRESENT!!!!!!!!!!!!!
+
 	if #idTable == 0 or tableType == '' then
 		print('QuickTrade: Invalid target')
 		return
 	end
-
-	-- FOR TESTING WITHOUT NPC PRESENT!!!!!!!!!!!!!
-	--idTable = alexandriteIDs
-	--tableType = 'Alexandrite'
-	-- FOR TESTING WITHOUT NPC PRESENT!!!!!!!!!!!!!
 	
 	-- Read the player inventory
 	local inventory = windower.ffxi.get_items(0)
@@ -214,13 +242,19 @@ windower.register_event('addon command', function(...)
 				numTrades = numTrades + math.ceil((idTable[i].stacks + idTable[i + 8].stacks) / 8)
 			end
 		end
-	elseif tableType == 'Zinc Ore' or tableType == 'Yagudo Necklaces' then
+	elseif tableType == 'Zinc Ore' or tableType == 'Yagudo Necklaces' then -- 4 at a time
 		numTrades = math.floor(idTable[1].count / 4)
-	elseif tableType == 'Mandragora Mad Items' then
+	elseif tableType == 'Mandragora Mad Items' or tableType == 'JSE Capes' then -- 1 at a time
 		for i = 1, #idTable do
 			numTrades = numTrades + idTable[i].count
 		end
-	elseif tableType == 'Only the Best Items' then
+	elseif tableType == 'JSE Capes x3' then -- 3 of the same kind
+		for i = 1, #idTable do
+			if idTable[i].count >= 3 then
+				numTrades = numTrades + math.min(1, math.floor(idTable[i].count / 3))
+			end
+		end
+	elseif tableType == 'Only the Best Items' then -- Unique for this quest
 		numTrades = numTrades + math.floor(idTable[1].count / 5)
 		numTrades = numTrades + math.floor(idTable[2].count / 3)
 		numTrades = numTrades + idTable[3].count
@@ -268,12 +302,21 @@ windower.register_event('addon command', function(...)
 			if idTable[1].count >= 4 then
 				tradeString = '//tradenpc 4 "'..idTable[1].name..'"'
 			end
-		elseif tableType == 'Mandragora Mad Items' then
+		elseif tableType == 'Mandragora Mad Items' or tableType == 'JSE Capes' then
 			for i = 1, #idTable do
 				tradeString = '//tradenpc '
 
 				if idTable[i].count > 0 then
 					tradeString = tradeString..'1 "'..idTable[i].name..'"'
+					break
+				end
+			end
+		elseif tableType == 'JSE Capes x3' then
+			for i = 1, #idTable do
+				tradeString = '//tradenpc '
+
+				if idTable[i].count >= 3 then
+					tradeString = tradeString..'3 "'..idTable[i].name..'"'
 					break
 				end
 			end
@@ -321,7 +364,10 @@ windower.register_event('addon command', function(...)
 			if exampleOnly then
 				print(tradeString)
 			else
-				textSkipTimer = os.time()
+				if tableType ~= 'JSE Capes' and tableType ~= 'JSE Capes x3' then
+					textSkipTimer = os.time()
+				end
+				
 				windower.send_command('input '..tradeString)
 			end
 		end
