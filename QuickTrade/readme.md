@@ -4,6 +4,9 @@ IMPORTANT
 This addon requires the addon "TradeNPC" to be installed and loaded before use.
 TradeNPC can be found here: https://github.com/Ivaar/Windower-addons
 
+The addon Itemizer is required if you would like to use the command '//qtr all' to also trade items that are in your Mog Sack or Mog Case.
+Itemizer can be downloaded from the Windower launcher or found here: http://docs.windower.net/addons/itemizer/
+
 
 What does this addon do?
 ------------------------
@@ -24,7 +27,7 @@ Valid trades are as follow:
 * Rem's Tale Chapters: Trade with Monisette in Port Jeuno to store your chapters.
 * UNTESTED - Mellidopt Wings: Trade with the ??? in Yorcia Weald
 * UNTESTED - Salvage Plans: Trade with Mrohk Sahjuuli in Aht Urhgan Whitegate to store your plans.
-* UNTESTED - Alexandrite: Trade with Paparoon in Nashmau for the quest 'Duties, Tasks, and Deeds.'
+* Alexandrite: Trade with Paparoon in Nashmau for the quest 'Duties, Tasks, and Deeds.'
 * Special Gobbie Keys: Trade with one of the various goblins throughout Vana'diel.
 * Zinc Ore: Trade with Talib in Port Bastok for the repeatable quest 'Shady Business.'
 * Yagudo Necklaces: Trade with Nanaa Mihgo in Windurst Woods for the repeeatable quest 'Mihgo's Amigo.'
@@ -33,7 +36,7 @@ Valid trades are as follow:
 * La Theine Cabbage, Millioncorn, Boyahda Moss: Trade with Melyon in Selbina for the repeatable quest 'Only the Best.'
 * UNTESTED - Soul Plates: Trade with Sanraku in Aht Urhgan Whitegate in exchange for Zeni.
 	* Currently set to trade only 1 at a time. This can be changed if needed.
-* UNTESTED - JSE Capes: Trade with an A.M.A.N. Reclaimer to trade a single cape, or trade with Makel-Pakel in the Celennia Memorial Library to trade 3 of the same cape.
+* JSE Capes: Trade with an A.M.A.N. Reclaimer to trade a single cape, or trade with Makel-Pakel in the Celennia Memorial Library to trade 3 of the same cape.
 	* Currently set to NOT skip dialogue when trading JSE capes. Make sure your inventory does not have any capes that you want to keep.
 
 
@@ -54,7 +57,11 @@ The behavior is similiar when trading other valid items with valid NPCs.
 You will need to enter the command once for each crystal element or item type you possess in your inventory.
 This seems to be a game limitation since most NPCs accept only one type of item at a time.
 
-If you wish to test this addon before having it perform a trade, you may edit line 33 in the QuickTrade.lua file.
+If you have the Itemizer addon and would like to also trade any valid items that you may have in your Mog Case or Mog Sack,
+enter the command '//qtr all'. This will allow QuickTrade to search your other valid storage areas and use Itemizer to move the items
+into your inventory automatically.
+
+If you wish to test this addon before having it perform a trade, you may edit line 36 in the QuickTrade.lua file.
 
 Change
 	exampleOnly = false
@@ -73,32 +80,28 @@ Place QuickTrade.lua in this new folder.
 Load the addon by accessing the console from within FFXI and typing 'lua l QuickTrade'
 
 If you want this addon to be loaded automatically every time you launch the game,
-add 'lua l QuickTrade' to the bottom of the file Windower\scripts\init.txt.
+add 'lua l QuickTrade' to the bottom of the file "Windower\scripts\init.txt"
 
-I would also recommend having the addon TradeNPC load automatically by adding
-'lua l TradeNPC' to your init.txt.
+I would also recommend having the addons TradeNPC and Itemizer load automatically by adding
+'lua l TradeNPC' and 'lua l itemizer' to your init.txt.
 
-If TradeNPC is not loaded when using this addon, the command will be issued but nothing will happen.
+If TradeNPC is not loaded when using this addon, the trade command will be issued but nothing will happen.
 
-
-Additional Information and Disclaimer
--------------------------------------
-
-QuickTrade only scans your inventory for the items mentioned above then enters a command that will be used by the TradeNPC addon.
-No other actions are carried out. This addon will not function if you do not have the TradeNPC addon loaded and working.
-
-I am an amateur programmer and have only recently tried LUA. Please feel free to modify/change/steal any of the code.
-If you end up making this addon better, please let me know!
 
 
 Version History
 ---------------
+v1.4.0
+2018.08.11
+* Added functionality '//qtr all' to use the Itemizer addon to include items in your Mog Case and Mog Sack
+* QuickTrade will target the nearest NPC automatically if you run the command without a target
+
 v1.3.0
-2018.07.2018
+2018.07.21
 * Added JSE Capes: 1x to the A.M.A.N. Reclaimers, 3x to Makel-Pakel
 
 v1.2.0
-2018.07.2018
+2018.07.20
 * Added Zinc Ore, Yagudo Necklaces, Mandragora-Mad items, Only the Best items, and Soul Plates
 
 v1.1.0

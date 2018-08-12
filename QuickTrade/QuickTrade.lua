@@ -27,13 +27,17 @@ For more information, please refer to <http://unlicense.org/>
 
 _addon.name = 'QuickTrade'
 _addon.author = 'Valok@Asura'
-_addon.version = '1.3.0'
+_addon.version = '1.4.0'
 _addon.command = 'qtr'
+
+require('tables')
+require('coroutine')
 
 exampleOnly = false
 textSkipTimer = 1
+lastNPC = ''
 
-windower.register_event('addon command', function(...)
+windower.register_event('addon command', function(arg1, ...)
 	-- Table of the tradeable itemIDs that may be found in the player inventory
 	local crystalIDs = {
 		{id = 4096, name = 'fire crystal', count = 0, stacks = 0, stacksize = 12},
@@ -188,12 +192,17 @@ windower.register_event('addon command', function(...)
 	
 	local idTable = {}
 	local tableType = ''
-	local stackSize = 12
 	local target = windower.ffxi.get_mob_by_target('t')
 	
 	if not target then
-		print('QuickTrade: No target selected')
-		return
+		windower.send_command('input /targetnpc')
+		coroutine.sleep(0.4)
+		target = windower.ffxi.get_mob_by_target('t')
+
+		if not target then
+			print('QuickTrade: No target selected')
+			return
+		end
 	end
 
 	for i = 1, #npcTable do
@@ -204,25 +213,105 @@ windower.register_event('addon command', function(...)
 		end
 	end
 
+	
+
 	-- FOR TESTING WITHOUT NPC PRESENT!!!!!!!!!!!!!
-	--idTable = jseCapeIDs
-	--tableType = 'JSE Capes x3'
+	--idTable = table.copy(alexandriteIDs)
+	--tableType = 'Alexandrite'
 	--exampleOnly = true
-	-- FOR TESTING WITHOUT NPC PRESENT!!!!!!!!!!!!!
+
+
 
 	if #idTable == 0 or tableType == '' then
 		print('QuickTrade: Invalid target')
+		lastNPC = ''
 		return
 	end
-	
+
+	mogSackTable = table.copy(idTable)
+	mogCaseTable = table.copy(idTable)
+
+	-- Scan the mog sack for each item in idTable
+	local mogSack = windower.ffxi.get_items('sack')
+	if not mogSack then
+		print('mogSack read error')
+	else
+		for i = 1, #mogSackTable do
+			for k, v in ipairs(mogSack) do
+				if v.id == mogSackTable[i].id then
+					mogSackTable[i].count = mogSackTable[i].count + v.count -- Updates the total number of items of each type
+					mogSackTable[i].stacks = mogSackTable[i].stacks + 1 -- Updates the total number of stacks of each type
+				end
+			end
+		end
+	end
+
+	-- Scan the mog case for each item in idTable
+	local mogCase = windower.ffxi.get_items('case')
+	if not mogCase then
+		print('mogCase read error')
+	else
+		for i = 1, #mogCaseTable do
+			for k, v in ipairs(mogCase) do
+				if v.id == mogCaseTable[i].id then
+					mogCaseTable[i].count = mogCaseTable[i].count + v.count -- Updates the total number of items of each type
+					mogCaseTable[i].stacks = mogCaseTable[i].stacks + 1 -- Updates the total number of stacks of each type
+				end
+			end
+		end
+	end
+
+	-- Uses the Itemizer addon to move tradable items from the mog case/sack into the player's inventory
+	if arg1 == 'all' and mogCase and mogSack then
+		inventory = windower.ffxi.get_items('inventory')
+		for i = 1, #idTable do
+			for k, v in ipairs(inventory) do
+				if v.id == idTable[i].id then
+					idTable[i].count = idTable[i].count + v.count -- Updates the total number of items of each type
+					idTable[i].stacks = idTable[i].stacks + 1 -- Updates the total number of stacks of each type
+				end
+			end
+		end
+
+		for i = 1, #mogSackTable do
+			if mogSackTable[i].count + mogCaseTable[i].count > 0 then
+				if exampleOnly then
+					print('//get "'..mogSackTable[i].name.. '" '..idTable[i].count + mogSackTable[i].count + mogCaseTable[i].count)
+				else
+					windower.add_to_chat(8, 'QuickTrade: Please wait - Using Itemizer to transfer '..mogSackTable[i].count + mogCaseTable[i].count..' '..mogSackTable[i].name..' to inventory')
+					windower.send_command('input //get "'..mogSackTable[i].name.. '" '..idTable[i].count + mogSackTable[i].count + mogCaseTable[i].count)
+					coroutine.sleep(2.5)
+				end
+			end
+		end
+
+		for i = 1, #idTable do
+			idTable[i].count = 0
+			idTable[i].stacks = 0
+		end
+	else
+		if target.name ~= lastNPC then
+			lastNPC = target.name
+			local mogCount = 0
+
+			for i = 1, #mogSackTable do
+				mogCount = mogCount + mogSackTable[i].count + mogCaseTable[i].count
+			end
+			
+			if mogCount > 0 then
+				windower.add_to_chat(8, 'QuickTrade: '..mogCount..' of these items are in your mog sack/case. Type "//qtr all" if you wish to move them into your inventory and trade them. Requires Itemizer')
+			end
+		end
+	end
+
 	-- Read the player inventory
-	local inventory = windower.ffxi.get_items(0)
-	
+	inventory = windower.ffxi.get_items('inventory')
+
 	if not inventory then
 		print('QuickTrade: Unable to read inventory')
 		return
 	end
-	
+
 	-- Scan the inventory for each item in idTable
 	for i = 1, #idTable do
 		for k, v in ipairs(inventory) do
@@ -232,6 +321,8 @@ windower.register_event('addon command', function(...)
 			end
 		end
 	end
+	
+
 	
 	local numTrades = 0 -- Number of times //qtr needs to be run to empty the player inventory
 	local availableTradeSlots = 8
@@ -372,7 +463,11 @@ windower.register_event('addon command', function(...)
 			end
 		end
 	else
-		windower.add_to_chat(8, "QuickTrade - No "..tableType.." in inventory")
+		if arg1 == 'all' then
+			windower.add_to_chat(8, "QuickTrade - No "..tableType.." in inventory, mog case, or mog sack")
+		else
+			windower.add_to_chat(8, "QuickTrade - No "..tableType.." in inventory")
+		end
 	end
 end)
  
@@ -384,8 +479,8 @@ windower.register_event('incoming text', function(original, modified, mode)
 	
 	local target = windower.ffxi.get_mob_by_target('t')
 	
-	if not target then return
-		false
+	if not target then
+		return false
 	end
 	
 	if mode == 150 or mode == 151 then
