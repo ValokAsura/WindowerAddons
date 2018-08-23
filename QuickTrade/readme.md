@@ -25,8 +25,6 @@ Valid trades are as follow:
 * Moat Carp: Trade with Joulet or Gallijaux in Port San d'Oria for the Lu Shang's Rod quest.
 * Copper Vouchers: Trade with Isakoth, Rolandienne, Fhelm Jobeizat, or Eternal Flame to store your vouchers.
 * Rem's Tale Chapters: Trade with Monisette in Port Jeuno to store your chapters.
-* UNTESTED - Mellidopt Wings: Trade with the ??? in Yorcia Weald
-* UNTESTED - Salvage Plans: Trade with Mrohk Sahjuuli in Aht Urhgan Whitegate to store your plans.
 * Alexandrite: Trade with Paparoon in Nashmau for the quest 'Duties, Tasks, and Deeds.'
 * Special Gobbie Keys: Trade with one of the various goblins throughout Vana'diel.
 * Zinc Ore: Trade with Talib in Port Bastok for the repeatable quest 'Shady Business.'
@@ -34,10 +32,16 @@ Valid trades are as follow:
 * Cornettes: Trade with Yoran-Oran in Windurst Walls for the repeatable quest 'Manragora-Mad.'
 	* The other 4 items that Yoran-Oran accepts are also supported.
 * La Theine Cabbage, Millioncorn, Boyahda Moss: Trade with Melyon in Selbina for the repeatable quest 'Only the Best.'
+* Wildskeeper Reive JSE Capes: Trade with an A.M.A.N. Reclaimer to trade a single cape, or trade with Makel-Pakel in the Celennia Memorial Library to trade 3 of the same cape.
+	* Currently set to NOT skip dialogue when trading JSE capes. Make sure your inventory does not have any capes that you want to keep.
+* Pellucid, Fern, and Taupe Stones: Trade with Oseem in Norg.
+
+* UNTESTED - Mellidopt Wings: Trade with the ??? in Yorcia Weald.
+* UNTESTED - Salvage Plans: Trade with Mrohk Sahjuuli in Aht Urhgan Whitegate to store your plans.
 * UNTESTED - Soul Plates: Trade with Sanraku in Aht Urhgan Whitegate in exchange for Zeni.
 	* Currently set to trade only 1 at a time. This can be changed if needed.
-* JSE Capes: Trade with an A.M.A.N. Reclaimer to trade a single cape, or trade with Makel-Pakel in the Celennia Memorial Library to trade 3 of the same cape.
-	* Currently set to NOT skip dialogue when trading JSE capes. Make sure your inventory does not have any capes that you want to keep.
+* UNTESTED - Ancient Beastcoins: Trade with Sagheera in Port Jeuno.
+* UNTESTED - Befouled Water: Trade to an Odyssean Passage.
 
 
 
@@ -91,6 +95,13 @@ If TradeNPC is not loaded when using this addon, the trade command will be issue
 
 Version History
 ---------------
+v1.5.0
+2018.08.22
+* Added Ancient Beastcoin trading with Sagheera
+* Added Pellucid Stone, Fern Stone, and Taupe Stone trading with Oseem
+* Added Befouled Water trading to Odyssean Passage
+* Adjusted Waypoint crystal trades to be much faster if you are carrying different crystal types
+
 v1.4.0
 2018.08.11
 * Added functionality '//qtr all' to use the Itemizer addon to include items in your Mog Case and Mog Sack

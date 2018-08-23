@@ -27,7 +27,7 @@ For more information, please refer to <http://unlicense.org/>
 
 _addon.name = 'QuickTrade'
 _addon.author = 'Valok@Asura'
-_addon.version = '1.4.0'
+_addon.version = '1.5.0'
 _addon.command = 'qtr'
 
 require('tables')
@@ -37,7 +37,7 @@ exampleOnly = false
 textSkipTimer = 1
 lastNPC = ''
 
-windower.register_event('addon command', function(arg1, ...)
+windower.register_event('addon command', function(arg1,  ...)
 	-- Table of the tradeable itemIDs that may be found in the player inventory
 	local crystalIDs = {
 		{id = 4096, name = 'fire crystal', count = 0, stacks = 0, stacksize = 12},
@@ -156,6 +156,20 @@ windower.register_event('addon command', function(arg1, ...)
 		{id = 28638, name = "evasionist's cape", count = 0, stacks = 0, stacksize = 1},
 	}
 
+	local ancientBeastcoinIDs = {
+		{id = 1875, name = 'ancient beastcoin', count = 0, stacks = 0, stacksize = 99},
+	}
+
+	local reisenjimaStones = {
+		{id = 9210, name = 'pellucid stone', count = 0, stacks = 0, stacksize = 12},
+		{id = 9211, name = 'fern stone', count = 0, stacks = 0, stacksize = 12},
+		{id = 9212, name = 'taupe stone', count = 0, stacks = 0, stacksize = 12},
+	}
+
+	local befouledWaterIDs = {
+		{id = 9008, name = 'befouled water', count = 0, stacks = 0, stacksize = 1},
+	}
+
 	local npcTable = {
 		{name = 'Shami', idTable = sealIDs, tableType = 'Seals'},
 		{name = 'Ephemeral Moogle', idTable = crystalIDs, tableType = 'Crystals'},
@@ -188,6 +202,9 @@ windower.register_event('addon command', function(arg1, ...)
 		{name = 'Sanraku', idTable = soulPlateIDs, tableType = 'Soul Plates'},
 		{name = 'A.M.A.N. Reclaimer', idTable = jseCapeIDs, tableType = 'JSE Capes'},
 		{name = 'Makel-Pakel', idTable = jseCapeIDs, tableType = 'JSE Capes x3'},
+		{name = 'Sagheera', idTable = ancientBeastcoinIDs, tableType = 'Ancient Beastcoins'},
+		{name = 'Oseem', idTable = reisenjimaStones, tableType = 'Reisenjima Stones'},
+		{name = 'Odyssean Passage', idTable = befouledWaterIDs, tableType = 'Befouled Water'},
 	}
 	
 	local idTable = {}
@@ -276,10 +293,10 @@ windower.register_event('addon command', function(arg1, ...)
 		for i = 1, #mogSackTable do
 			if mogSackTable[i].count + mogCaseTable[i].count > 0 then
 				if exampleOnly then
-					print('//get "'..mogSackTable[i].name.. '" '..idTable[i].count + mogSackTable[i].count + mogCaseTable[i].count)
+					print('//get "' .. mogSackTable[i].name ..  '" ' .. idTable[i].count + mogSackTable[i].count + mogCaseTable[i].count)
 				else
-					windower.add_to_chat(8, 'QuickTrade: Please wait - Using Itemizer to transfer '..mogSackTable[i].count + mogCaseTable[i].count..' '..mogSackTable[i].name..' to inventory')
-					windower.send_command('input //get "'..mogSackTable[i].name.. '" '..idTable[i].count + mogSackTable[i].count + mogCaseTable[i].count)
+					windower.add_to_chat(8, 'QuickTrade: Please wait - Using Itemizer to transfer ' .. mogSackTable[i].count + mogCaseTable[i].count .. ' ' .. mogSackTable[i].name .. ' to inventory')
+					windower.send_command('input //get "' .. mogSackTable[i].name ..  '" ' .. idTable[i].count + mogSackTable[i].count + mogCaseTable[i].count)
 					coroutine.sleep(2.5)
 				end
 			end
@@ -299,7 +316,7 @@ windower.register_event('addon command', function(arg1, ...)
 			end
 			
 			if mogCount > 0 then
-				windower.add_to_chat(8, 'QuickTrade: '..mogCount..' of these items are in your mog sack/case. Type "//qtr all" if you wish to move them into your inventory and trade them. Requires Itemizer')
+				windower.add_to_chat(8, 'QuickTrade: ' .. mogCount .. ' of these items are in your mog sack/case. Type "//qtr all" if you wish to move them into your inventory and trade them. Requires Itemizer')
 			end
 		end
 	end
@@ -322,16 +339,24 @@ windower.register_event('addon command', function(arg1, ...)
 		end
 	end
 	
-
-	
 	local numTrades = 0 -- Number of times //qtr needs to be run to empty the player inventory
 	local availableTradeSlots = 8
 
 	if tableType == 'Crystals' then
-		for i = 1, 8 do
-			if idTable[i].stacks > 0 or idTable[i + 8].stacks > 0 then
-				numTrades = numTrades + math.ceil((idTable[i].stacks + idTable[i + 8].stacks) / 8)
+		if target.name == 'Ephemeral Moogle' then
+			for i = 1, 8 do
+				if idTable[i].stacks > 0 or idTable[i + 8].stacks > 0 then
+					numTrades = numTrades + math.ceil((idTable[i].stacks + idTable[i + 8].stacks) / 8)
+				end
 			end
+		else
+			for i = 1, 8 do
+				if idTable[i].stacks > 0 or idTable[i + 8].stacks > 0 then
+					numTrades = numTrades + idTable[i].stacks + idTable[i + 8].stacks
+				end
+			end
+
+			numTrades = math.ceil(numTrades / 8)
 		end
 	elseif tableType == 'Zinc Ore' or tableType == 'Yagudo Necklaces' then -- 4 at a time
 		numTrades = math.floor(idTable[1].count / 4)
@@ -351,6 +376,8 @@ windower.register_event('addon command', function(arg1, ...)
 		numTrades = numTrades + idTable[3].count
 	elseif tableType == 'Special Gobbiedial Keys' or tableType == 'Soul Plates' then
 		numTrades = idTable[1].count
+	elseif tableType == 'Reisenjima Stones' then
+		numTrades = math.ceil((idTable[1].stacks + idTable[2].stacks + idTable[3].stacks) / 8)
 	else
 		for i = 1, #idTable do
 			if idTable[i].stacks > 0 then
@@ -360,7 +387,7 @@ windower.register_event('addon command', function(arg1, ...)
 	end
 
 	if exampleOnly then
-		print(numTrades..' total trades')
+		print(numTrades .. ' total trades')
 	end
 
 	-- Prepare and send command through TradeNPC if there are trades to be made
@@ -369,36 +396,39 @@ windower.register_event('addon command', function(arg1, ...)
 		availableTradeSlots = 8
 		
 		if tableType == 'Crystals' then
+			tradeString = '//tradenpc'
+
 			for i = 1, 8 do
 				-- Build the string that will be used as the command
-				tradeString = '//tradenpc '
-				availableTradeSlots = 8
+				--availableTradeSlots = 8
 				
 				if idTable[i].count > 0 then
-					tradeString = tradeString..math.min(availableTradeSlots * idTable[i].stacksize, idTable[i].count)..' "'..idTable[i].name..'"'
+					tradeString = tradeString .. ' ' .. math.min(availableTradeSlots * idTable[i].stacksize, idTable[i].count) .. ' "' .. idTable[i].name .. '"'
 					availableTradeSlots = math.max(0, availableTradeSlots - idTable[i].stacks)
 				end
 				
 				if availableTradeSlots > 0 and idTable[i + 8].count > 0 then
-					tradeString = tradeString..' '..math.min(availableTradeSlots * idTable[i + 8].stacksize, idTable[i + 8].count)..' "'..idTable[i + 8].name..'"'
+					tradeString = tradeString .. ' ' .. math.min(availableTradeSlots * idTable[i + 8].stacksize, idTable[i + 8].count) .. ' "' .. idTable[i + 8].name .. '"'
+					availableTradeSlots = math.max(0, availableTradeSlots - idTable[i].stacks)
 				end
 
-				if idTable[i].count > 0 or idTable[i + 8].count > 0 then
+				if (target.name == 'Ephemeral Moogle' and (idTable[i].count > 0 or idTable[i + 8].count > 0)) or availableTradeSlots < 1 then
+					--print(target.name .. ' - ' .. availableTradeSlots)
 					break
 				end
 			end
 		elseif tableType == 'Special Gobbiedial Keys' or tableType == 'Soul Plates' then -- 1 item at a time
-			tradeString = '//tradenpc  1 "'..idTable[1].name..'"'
+			tradeString = '//tradenpc  1 "' .. idTable[1].name .. '"'
 		elseif tableType == 'Zinc Ore' or tableType == 'Yagudo Necklaces' then -- 4 items at a time
 			if idTable[1].count >= 4 then
-				tradeString = '//tradenpc 4 "'..idTable[1].name..'"'
+				tradeString = '//tradenpc 4 "' .. idTable[1].name .. '"'
 			end
 		elseif tableType == 'Mandragora Mad Items' or tableType == 'JSE Capes' then
 			for i = 1, #idTable do
 				tradeString = '//tradenpc '
 
 				if idTable[i].count > 0 then
-					tradeString = tradeString..'1 "'..idTable[i].name..'"'
+					tradeString = tradeString .. '1 "' .. idTable[i].name .. '"'
 					break
 				end
 			end
@@ -407,7 +437,7 @@ windower.register_event('addon command', function(arg1, ...)
 				tradeString = '//tradenpc '
 
 				if idTable[i].count >= 3 then
-					tradeString = tradeString..'3 "'..idTable[i].name..'"'
+					tradeString = tradeString .. '3 "' .. idTable[i].name .. '"'
 					break
 				end
 			end
@@ -416,18 +446,32 @@ windower.register_event('addon command', function(arg1, ...)
 				tradeString = '//tradenpc '
 
 				if idTable[1].count >= 5 then
-					tradeString = tradeString..'5 "'..idTable[1].name..'"'
+					tradeString = tradeString .. '5 "' .. idTable[1].name .. '"'
 					break
 				end
 
 				if idTable[2].count >= 3 then
-					tradeString = tradeString..'3 "'..idTable[2].name..'"'
+					tradeString = tradeString .. '3 "' .. idTable[2].name .. '"'
 					break
 				end
 
 				if idTable[3].count > 0 then
-					tradeString = tradeString..'1 "'..idTable[3].name..'"'
+					tradeString = tradeString .. '1 "' .. idTable[3].name .. '"'
 					break
+				end
+			end
+		elseif tableType == 'Reisenjima Stones' then
+			tradeString = '//tradenpc'
+
+			for i = 1, #idTable do
+				if idTable[i].count > 0 then
+					if availableTradeSlots > 0 then
+						tradeString = tradeString .. ' ' .. math.min(availableTradeSlots * idTable[i].stacksize, idTable[i].count) .. ' "' .. idTable[i].name .. '"'
+						print(i .. ': ' .. tradeString)
+						availableTradeSlots = math.max(0, availableTradeSlots - idTable[i].stacks)
+					else
+						break
+					end
 				end
 			end
 		else
@@ -436,8 +480,8 @@ windower.register_event('addon command', function(arg1, ...)
 				availableTradeSlots = 8
 				
 				if idTable[i].count > 0 then
-					availableTradeSlots = math.max(1, availableTradeSlots - idTable[i].stacks)
-					tradeString = tradeString..math.min(availableTradeSlots * idTable[i].stacksize, idTable[i].count)..' "'..idTable[i].name..'"'
+					--availableTradeSlots = math.max(1, availableTradeSlots - idTable[i].stacks)
+					tradeString = tradeString .. math.min(availableTradeSlots * idTable[i].stacksize, idTable[i].count) .. ' "' .. idTable[i].name .. '"'
 					break
 				end
 			end
@@ -447,9 +491,9 @@ windower.register_event('addon command', function(arg1, ...)
 			if numTrades - 1 == 0 then
 				windower.add_to_chat(8, 'QuickTrade: Trading Complete')
 			elseif numTrades - 1 == 1 then
-				windower.add_to_chat(8, 'QuickTrade: '..(numTrades - 1)..' trade remaining')
+				windower.add_to_chat(8, 'QuickTrade: ' .. (numTrades - 1) .. ' trade remaining')
 			else
-				windower.add_to_chat(8, 'QuickTrade: '..(numTrades - 1)..' trades remaining')
+				windower.add_to_chat(8, 'QuickTrade: ' .. (numTrades - 1) .. ' trades remaining')
 			end
 			
 			if exampleOnly then
@@ -459,14 +503,14 @@ windower.register_event('addon command', function(arg1, ...)
 					textSkipTimer = os.time()
 				end
 				
-				windower.send_command('input '..tradeString)
+				windower.send_command('input ' .. tradeString)
 			end
 		end
 	else
 		if arg1 == 'all' then
-			windower.add_to_chat(8, "QuickTrade - No "..tableType.." in inventory, mog case, or mog sack")
+			windower.add_to_chat(8, "QuickTrade - No " .. tableType .. " in inventory, mog case, or mog sack")
 		else
-			windower.add_to_chat(8, "QuickTrade - No "..tableType.." in inventory")
+			windower.add_to_chat(8, "QuickTrade - No " .. tableType .. " in inventory")
 		end
 	end
 end)
