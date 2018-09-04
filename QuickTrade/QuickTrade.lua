@@ -27,7 +27,7 @@ For more information, please refer to <http://unlicense.org/>
 
 _addon.name = 'QuickTrade'
 _addon.author = 'Valok@Asura'
-_addon.version = '1.6.0'
+_addon.version = '1.6.1'
 _addon.command = 'qtr'
 
 require('tables')
@@ -171,6 +171,9 @@ windower.register_event('addon command', function(arg1,  ...)
 	}
 
 	local geasFeteZitahIDs = {
+		{id = 4061, name = 'riftborn boulder', count = 0, stacks = 0, stacksize = 99, minimum = 5},
+		{id = 4060, name = 'beitetsu', count = 0, stacks = 0, stacksize = 99, minimum = 5},
+		{id = 4059, name = 'pluton', count = 0, stacks = 0, stacksize = 99, minimum = 5},
 		{id = 9060, name = 'ethereal incense', count = 0, stacks = 0, stacksize = 12, minimum = 5},
 		{id = 9057, name = "ayapec's shell", count = 0, stacks = 0, stacksize = 12, minimum = 5},
 		{id = 4398, name = 'fish mithkabob', count = 0, stacks = 0, stacksize = 12, minimum = 6}, -- 1k from curio moogle
@@ -185,8 +188,15 @@ windower.register_event('addon command', function(arg1,  ...)
 	}
 
 	local geasFeteRuaunIDs = {
+		{id = 4015, name = 'yggdreant root', count = 0, stacks = 0, stacksize = 12, minimum = 1},
+		{id = 4013, name = 'waktza crest', count = 0, stacks = 0, stacksize = 12, minimum = 1},
+		{id = 8754, name = 'cehuetzi pelt', count = 0, stacks = 0, stacksize = 12, minimum = 1},
+		{id = 9097, name = "mhuufya's beak", count = 0, stacks = 0, stacksize = 12, minimum = 5},
+		{id = 9103, name = "vidmapire's claw", count = 0, stacks = 0, stacksize = 12, minimum = 5},
+		{id = 9104, name = "centurio's armor", count = 0, stacks = 0, stacksize = 12, minimum = 5},
 		{id = 9051, name = "camahueto's fur", count = 0, stacks = 0, stacksize = 12, minimum = 5},
 		{id = 9031, name = "vedrfolnir's wing", count = 0, stacks = 0, stacksize = 12, minimum = 5},
+		{id = 9059, name = "azrael's eye", count = 0, stacks = 0, stacksize = 12, minimum = 5},
 		{id = 4479, name = 'bhefhel marlin', count = 0, stacks = 0, stacksize = 12, minimum = 1}, -- 4k id 5806?
 		{id = 4563, name = 'pamama tart', count = 0, stacks = 0, stacksize = 12, minimum = 1}, -- 10k
 		{id = 746, name = 'platinum ingot', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 13k
@@ -199,6 +209,14 @@ windower.register_event('addon command', function(arg1,  ...)
 	}
 
 	local geasFeteReisenjimaIDs = {
+		{id = 9151, name = "sovereign behemoth's hide", count = 0, stacks = 0, stacksize = 12, minimum = 1},
+		{id = 9150, name = "tolba's shell", count = 0, stacks = 0, stacksize = 12, minimum = 1},
+		{id = 9149, name = "hidhaegg's scale", count = 0, stacks = 0, stacksize = 12, minimum = 1},
+		{id = 6296, name = "gramk-droog's grand coffer", count = 0, stacks = 0, stacksize = 99, minimum = 1},
+		{id = 6288, name = "ignor-mnt's grand coffer", count = 0, stacks = 0, stacksize = 99, minimum = 2},
+		{id = 6290, name = "durs-vike's grand coffer", count = 0, stacks = 0, stacksize = 99, minimum = 2},
+		{id = 6294, name = "liij-vok's grand coffer", count = 0, stacks = 0, stacksize = 99, minimum = 2},
+		{id = 6292, name = "tryl-wuj's grand coffer", count = 0, stacks = 0, stacksize = 99, minimum = 2},
 		{id = 6286, name = "ymmr-ulvid's grand coffer", count = 0, stacks = 0, stacksize = 99, minimum = 2},
 		{id = 4471, name = 'bladefish', count = 0, stacks = 0, stacksize = 1, minimum = 1},
 		{id = 12302, name = 'darksteel buckler', count = 0, stacks = 0, stacksize = 1, minimum = 1},

@@ -37,6 +37,10 @@ Valid trades are as follow:
 * Pellucid, Fern, and Taupe Stones: Trade with Oseem in Norg.
 
 * TESTED-ISH - Geas Fete: Trade with Affi, Dremi, or Shiftrix in the Escha zones and Reisenjima to speed up your aquisition of NM pop items.
+	* Not currently supported:
+		* Zi'Tah: HELM NMs
+		* Ru'Aun: Ark Angels, Heavenly Beasts, Warder of Courage
+		* Reisenjima: HELM NMs
 
 * UNTESTED - Mellidopt Wings: Trade with the ??? in Yorcia Weald.
 * UNTESTED - Salvage Plans: Trade with Mrohk Sahjuuli in Aht Urhgan Whitegate to store your plans.
@@ -97,6 +101,10 @@ If TradeNPC is not loaded when using this addon, the trade command will be issue
 
 Version History
 ---------------
+v1.6.1
+2018.09.04
+* Added a few missing Escha trades
+
 v1.6.0
 2018.09.04
 * Added Escha Zi'Tah, Escha Ru'Aun, and Reisenjima NM pop item trading
