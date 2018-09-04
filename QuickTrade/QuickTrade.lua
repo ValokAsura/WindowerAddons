@@ -27,7 +27,7 @@ For more information, please refer to <http://unlicense.org/>
 
 _addon.name = 'QuickTrade'
 _addon.author = 'Valok@Asura'
-_addon.version = '1.5.1'
+_addon.version = '1.6.0'
 _addon.command = 'qtr'
 
 require('tables')
@@ -170,6 +170,47 @@ windower.register_event('addon command', function(arg1,  ...)
 		{id = 9008, name = 'befouled water', count = 0, stacks = 0, stacksize = 1},
 	}
 
+	local geasFeteZitahIDs = {
+		{id = 9060, name = 'ethereal incense', count = 0, stacks = 0, stacksize = 12, minimum = 5},
+		{id = 9057, name = "ayapec's shell", count = 0, stacks = 0, stacksize = 12, minimum = 5},
+		{id = 4398, name = 'fish mithkabob', count = 0, stacks = 0, stacksize = 12, minimum = 6}, -- 1k from curio moogle
+		{id = 16581, name = 'holy sword', count = 0, stacks = 0, stacksize = 1, minimum = 1}, -- 20k or 430 sparks
+		{id = 16564, name = 'flame blade', count = 0, stacks = 0, stacksize = 1, minimum = 1}, -- 10k or 775 sparks
+		{id = 745, name = 'gold ingot', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 10k
+		{id = 829, name = 'silk cloth', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 10k
+		{id = 717, name = 'mahogany lumber', count = 0, stacks = 0, stacksize = 12, minimum = 3}, -- 10k
+		{id = 654, name = 'darksteel ingot', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 15k
+		{id = 1629, name = 'buffalo leather', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 20k
+		{id = 13091, name = 'carapace gorget', count = 0, stacks = 0, stacksize = 1, minimum = 1}, -- 60k
+	}
+
+	local geasFeteRuaunIDs = {
+		{id = 9051, name = "camahueto's fur", count = 0, stacks = 0, stacksize = 12, minimum = 5},
+		{id = 9031, name = "vedrfolnir's wing", count = 0, stacks = 0, stacksize = 12, minimum = 5},
+		{id = 4479, name = 'bhefhel marlin', count = 0, stacks = 0, stacksize = 12, minimum = 1}, -- 4k id 5806?
+		{id = 4563, name = 'pamama tart', count = 0, stacks = 0, stacksize = 12, minimum = 1}, -- 10k
+		{id = 746, name = 'platinum ingot', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 13k
+		{id = 652, name = 'steel ingot', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 15k
+		{id = 719, name = 'ebony lumber', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 15k
+		{id = 2124, name = 'catoblepas leather', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 15k
+		{id = 931, name = 'cermet chunk', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 20k
+		{id = 2288, name = 'karakul cloth', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 30k
+		{id = 13981, name = 'turtle bangles', count = 0, stacks = 0, stacksize = 1, minimum = 1}, -- 30k
+	}
+
+	local geasFeteReisenjimaIDs = {
+		{id = 6286, name = "ymmr-ulvid's grand coffer", count = 0, stacks = 0, stacksize = 99, minimum = 2},
+		{id = 4471, name = 'bladefish', count = 0, stacks = 0, stacksize = 1, minimum = 1},
+		{id = 12302, name = 'darksteel buckler', count = 0, stacks = 0, stacksize = 1, minimum = 1},
+		{id = 862, name = 'behemoth leather', count = 0, stacks = 0, stacksize = 12, minimum = 1},
+		{id = 720, name = 'ancient lumber', count = 0, stacks = 0, stacksize = 12, minimum = 2},
+		{id = 13206, name = 'gold obi', count = 0, stacks = 0, stacksize = 1, minimum = 1},
+		{id = 13983, name = 'gold bangles', count = 0, stacks = 0, stacksize = 1, minimum = 1},
+		{id = 17601, name = "demon's knife", count = 0, stacks = 0, stacksize = 1, minimum = 1},
+		{id = 16502, name = 'venom knife', count = 0, stacks = 0, stacksize = 1, minimum = 1},
+		{id = 4418, name = 'turtle soup', count = 0, stacks = 0, stacksize = 1, minimum = 1},
+	}
+
 	local npcTable = {
 		{name = 'Shami', idTable = sealIDs, tableType = 'Seals'},
 		{name = 'Ephemeral Moogle', idTable = crystalIDs, tableType = 'Crystals'},
@@ -205,6 +246,9 @@ windower.register_event('addon command', function(arg1,  ...)
 		{name = 'Sagheera', idTable = ancientBeastcoinIDs, tableType = 'Ancient Beastcoins'},
 		{name = 'Oseem', idTable = reisenjimaStones, tableType = 'Reisenjima Stones'},
 		{name = 'Odyssean Passage', idTable = befouledWaterIDs, tableType = 'Befouled Water'},
+		{name = 'Affi', idTable = geasFeteZitahIDs, tableType = "Geas Fete Zi'Tah Items"},
+		{name = 'Dremi', idTable = geasFeteRuaunIDs, tableType = "Geas Fete Ru'Aun Items"},
+		{name = 'Shiftrix', idTable = geasFeteReisenjimaIDs, tableType = "Geas Fete Reisenjima Items"},
 	}
 	
 	local idTable = {}
@@ -360,7 +404,7 @@ windower.register_event('addon command', function(arg1,  ...)
 		end
 	elseif tableType == 'Zinc Ore' or tableType == 'Yagudo Necklaces' then -- 4 at a time
 		numTrades = math.floor(idTable[1].count / 4)
-	elseif tableType == 'Mandragora Mad Items' or tableType == 'JSE Capes' then -- 1 at a time
+	elseif tableType == 'Mandragora Mad Items' or tableType == 'JSE Capes' or tableType == 'Special Gobbiedial Keys' or tableType == 'Soul Plates' then -- 1 at a time
 		for i = 1, #idTable do
 			numTrades = numTrades + idTable[i].count
 		end
@@ -374,10 +418,17 @@ windower.register_event('addon command', function(arg1,  ...)
 		numTrades = numTrades + math.floor(idTable[1].count / 5)
 		numTrades = numTrades + math.floor(idTable[2].count / 3)
 		numTrades = numTrades + idTable[3].count
-	elseif tableType == 'Special Gobbiedial Keys' or tableType == 'Soul Plates' then
-		numTrades = idTable[1].count
-	elseif tableType == 'Reisenjima Stones' then
+	--elseif tableType == 'Special Gobbiedial Keys' or tableType == 'Soul Plates' then
+	--	numTrades = idTable[1].count
+	elseif tableType == 'Reisenjima Stones' then -- Can trade all types at once
 		numTrades = math.ceil((idTable[1].stacks + idTable[2].stacks + idTable[3].stacks) / 8)
+	elseif tableType == "Geas Fete Zi'Tah Items" or tableType == "Geas Fete Ru'Aun Items" or tableType == "Geas Fete Reisenjima Items" then
+		for i = 1, #idTable do
+			if idTable[i].count >= idTable[i].minimum then
+				print(idTable[i].count .. ' ' .. idTable[i].name)
+				numTrades = numTrades + math.floor(idTable[i].count / idTable[i].minimum)
+			end
+		end
 	else
 		for i = 1, #idTable do
 			if idTable[i].stacks > 0 then
@@ -393,6 +444,7 @@ windower.register_event('addon command', function(arg1,  ...)
 	-- Prepare and send command through TradeNPC if there are trades to be made
 	if numTrades > 0 then
 		local tradeString = '//tradenpc '
+		local tradeList = ''
 		availableTradeSlots = 8
 		
 		if tableType == 'Crystals' then
@@ -472,6 +524,14 @@ windower.register_event('addon command', function(arg1,  ...)
 					end
 				end
 			end
+		elseif tableType == "Geas Fete Zi'Tah Items" or tableType == "Geas Fete Ru'Aun Items" or tableType == "Geas Fete Reisenjima Items"then
+			for i = 1, #idTable do
+				if idTable[i].count >= idTable[i].minimum then
+					tradeString = '//tradenpc ' .. idTable[i].minimum .. ' "' .. idTable[i].name .. '"'
+					tradeList = idTable[i].minimum .. ' ' .. idTable[i].name
+					break
+				end
+			end
 		else
 			for i = 1, #idTable do
 				tradeString = '//tradenpc '
@@ -497,11 +557,16 @@ windower.register_event('addon command', function(arg1,  ...)
 			if exampleOnly then
 				print(tradeString)
 			else
-				if tableType ~= 'JSE Capes' and tableType ~= 'JSE Capes x3' then
+				if tableType ~= 'JSE Capes' and tableType ~= 'JSE Capes x3' and not string.find(tableType, 'Geas Fete') then
 					textSkipTimer = os.time()
 				end
 				
 				windower.send_command('input ' .. tradeString)
+			end
+
+			if string.find(tableType, 'Geas Fete') then
+				windower.add_to_chat(8, 'QuickTrade: Trading '.. tradeList)
+				windower.add_to_chat(8, "QuickTrade: Don't forget your Tribulens or Radialens!")
 			end
 		end
 	else
