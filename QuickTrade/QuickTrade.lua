@@ -27,7 +27,7 @@ For more information, please refer to <http://unlicense.org/>
 
 _addon.name = 'QuickTrade'
 _addon.author = 'Valok@Asura'
-_addon.version = '1.6.1'
+_addon.version = '1.6.2'
 _addon.command = 'qtr'
 
 require('tables')
@@ -154,6 +154,7 @@ windower.register_event('addon command', function(arg1,  ...)
 		{id = 28636, name = "bookworm's cape", count = 0, stacks = 0, stacksize = 1},
 		{id = 28637, name = 'lifestream cape', count = 0, stacks = 0, stacksize = 1},
 		{id = 28638, name = "evasionist's cape", count = 0, stacks = 0, stacksize = 1},
+		{id = 74994, name = 'mecistopins Mantle', count = 0, stacks = 0, stacksize = 1},
 	}
 
 	local ancientBeastcoinIDs = {

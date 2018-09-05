@@ -101,6 +101,10 @@ If TradeNPC is not loaded when using this addon, the trade command will be issue
 
 Version History
 ---------------
+v1.6.2
+2018.09.05
+* Added Mecistopins Mantle to A.M.A.N. Reclaimer list
+
 v1.6.1
 2018.09.04
 * Added a few missing Escha trades
