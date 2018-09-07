@@ -1,6 +1,13 @@
+--[[
+
+	Many thanks to Ryan Skeldon, the creator of the addon Grimoire.
+	This code borrows elements from his addon but is heavily modified.
+
+]]
+
 _addon.version = '1.0.0'
 _addon.name = 'Bursting'
-_addon.author = 'Valok@Asura'
+_addon.author = 'Valok@Asura, psykad'
 _addon.commands = {'bursting', 'mb'}
 
 require 'tables'
