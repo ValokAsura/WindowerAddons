@@ -36,18 +36,24 @@ Valid trades are as follow:
 	* Currently set to NOT skip dialogue when trading JSE capes. Make sure your inventory does not have any capes that you want to keep.
 * Pellucid, Fern, and Taupe Stones: Trade with Oseem in Norg.
 
+
 * TESTED-ISH - Geas Fete: Trade with Affi, Dremi, or Shiftrix in the Escha zones and Reisenjima to speed up your aquisition of NM pop items.
 	* Not currently supported:
 		* Zi'Tah: HELM NMs
 		* Ru'Aun: Ark Angels, Heavenly Beasts, Warder of Courage
 		* Reisenjima: HELM NMs
 
+		
 * UNTESTED - Mellidopt Wings: Trade with the ??? in Yorcia Weald.
 * UNTESTED - Salvage Plans: Trade with Mrohk Sahjuuli in Aht Urhgan Whitegate to store your plans.
 * UNTESTED - Soul Plates: Trade with Sanraku in Aht Urhgan Whitegate in exchange for Zeni.
 	* Currently set to trade only 1 at a time. This can be changed if needed.
 * UNTESTED - Ancient Beastcoins: Trade with Sagheera in Port Jeuno.
 * UNTESTED - Befouled Water: Trade to an Odyssean Passage.
+
+
+'Loop' command is disabled for the following trades:
+** All Geas Fete Trades, Befouled Water, JSE Capes x3, 
 
 
 
@@ -66,6 +72,11 @@ The behavior is similiar when trading other valid items with valid NPCs.
 
 You will need to enter the command once for each crystal element or item type you possess in your inventory.
 This seems to be a game limitation since most NPCs accept only one type of item at a time.
+
+As of 2018.09.07, a new argument 'loop' was added. This will allow QuickTrade to perform all possible trades with the NPC.
+For example, if you have 10 Special Gobbie Keys, visit a gobbie and enter '//qtr loop' and it will trade all 10 keys for you, 
+one after the other, until you run out of keys or inventory space. Entering '//qtr loop 5' will allow QuickTrade to loop a maximum of 5 times,
+instead of using all 10 keys.
 
 If you have the Itemizer addon and would like to also trade any valid items that you may have in your Mog Case or Mog Sack,
 enter the command '//qtr all'. This will allow QuickTrade to search your other valid storage areas and use Itemizer to move the items
@@ -96,11 +107,16 @@ I would also recommend having the addons TradeNPC and Itemizer load automaticall
 'lua l TradeNPC' and 'lua l itemizer' to your init.txt.
 
 If TradeNPC is not loaded when using this addon, the trade command will be issued but nothing will happen.
+The same is true regarding Itemizer. Commands will be issued, but nothing will happen.
 
 
 
 Version History
 ---------------
+v.1.7.0
+2018.09.07
+* Added '//qtr loop' command to allow multiple trades to be done consecutively
+
 v1.6.2
 2018.09.05
 * Added Mecistopins Mantle to A.M.A.N. Reclaimer list

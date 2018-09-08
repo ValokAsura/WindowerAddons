@@ -27,7 +27,7 @@ For more information, please refer to <http://unlicense.org/>
 
 _addon.name = 'QuickTrade'
 _addon.author = 'Valok@Asura'
-_addon.version = '1.6.2'
+_addon.version = '1.7.0'
 _addon.command = 'qtr'
 
 require('tables')
@@ -37,7 +37,58 @@ exampleOnly = false
 textSkipTimer = 1
 lastNPC = ''
 
-windower.register_event('addon command', function(arg1,  ...)
+loopWait = 0
+loopCount = 1
+loopModeSet = false
+loopable = false
+loopMax = 0
+loopCurrent = 0
+lastLoopNPC = ''
+
+windower.register_event('addon command', function(...)
+	loopCount = 1
+	loopModeSet = false
+	loopable = false
+	loopMax = 0
+	loopCurrent = 0
+	loopText = ''
+	lastLoopNPC = ''
+
+	if #arg > 0 and arg[1] == 'loop'then
+		loopModeSet = true
+		--print('loop request detected')
+
+		if #arg > 1 and arg[2] then
+			if not tonumber(arg[2]) then
+				print('Invalid Loop Count Entry: ' .. arg[2])
+				return
+			end
+
+			loopMax = tonumber(arg[2])
+			--print('Max Loops: ' .. loopMax)
+		end
+	end
+
+
+	if loopMax == 0 then
+		loopMax = 100000
+	end
+
+	while loopCount > 0 and loopCurrent < loopMax do
+		loopCurrent = loopCurrent + 1
+		quicktrade(arg)
+		--print('loopCount: ' .. loopCount)
+		--loopCount = loopCount - 1
+
+		if loopCount > 0 then
+			--print(loopCount .. ' loops remaining')
+			coroutine.sleep(loopWait)
+		end
+	end
+	--print('Complete')
+end)
+
+function quicktrade(arg)
 	-- Table of the tradeable itemIDs that may be found in the player inventory
 	local crystalIDs = {
 		{id = 4096, name = 'fire crystal', count = 0, stacks = 0, stacksize = 12},
@@ -231,43 +282,43 @@ windower.register_event('addon command', function(arg1,  ...)
 	}
 
 	local npcTable = {
-		{name = 'Shami', idTable = sealIDs, tableType = 'Seals'},
-		{name = 'Ephemeral Moogle', idTable = crystalIDs, tableType = 'Crystals'},
-		{name = 'Waypoint', idTable = crystalIDs, tableType = 'Crystals'},
-		{name = 'Joulet', idTable = moatCarpIDs, tableType = 'Moat Carp'},
-		{name = 'Gallijaux', idTable = moatCarpIDs, tableType = 'Moat Carp'},
-		{name = 'Isakoth', idTable = copperVoucherIDs, tableType = 'Copper Vouchers'},
-		{name = 'Rolandienne', idTable = copperVoucherIDs, tableType = 'Copper Vouchers'},
-		{name = 'Fhelm Jobeizat', idTable = copperVoucherIDs, tableType = 'Copper Vouchers'},
-		{name = 'Eternal Flame', idTable = copperVoucherIDs, tableType = 'Copper Vouchers'},
-		{name = 'Monisette', idTable = remsTaleIDs, tableType = "Rem's Tales"},
-		{name = '???', idTable = mellidoptWingIDs, tableType = 'Mellidopt Wings'},
-		{name = 'Mrohk Sahjuuli', idTable = salvagePlanIDs, tableType = 'Salvage Plans'},
-		{name = 'Paparoon', idTable = alexandriteIDs, tableType = 'Alexandrite'},
-		{name = 'Mystrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
-		{name = 'Habitox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
-		{name = 'Bountibox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
-		{name = 'Specilox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
-		{name = 'Arbitrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
-		{name = 'Funtrox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
-		{name = 'Priztrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
-		{name = 'Sweepstox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
-		{name = 'Wondrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
-		{name = 'Rewardox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
-		{name = 'Winrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys'},
-		{name = 'Talib', idTable = zincOreIDs, tableType = 'Zinc Ore'},
-		{name = 'Nanaa Mihgo', idTable = yagudoNecklaceIDs, tableType = 'Yagudo Necklaces'},
-		{name = 'Yoran-Oran', idTable = mandragoraMadIDs, tableType = 'Mandragora Mad Items'},
-		{name = 'Melyon', idTable = onlyTheBestIDs, tableType = 'Only the Best Items'},
-		{name = 'Sanraku', idTable = soulPlateIDs, tableType = 'Soul Plates'},
-		{name = 'A.M.A.N. Reclaimer', idTable = jseCapeIDs, tableType = 'JSE Capes'},
-		{name = 'Makel-Pakel', idTable = jseCapeIDs, tableType = 'JSE Capes x3'},
-		{name = 'Sagheera', idTable = ancientBeastcoinIDs, tableType = 'Ancient Beastcoins'},
-		{name = 'Oseem', idTable = reisenjimaStones, tableType = 'Reisenjima Stones'},
-		{name = 'Odyssean Passage', idTable = befouledWaterIDs, tableType = 'Befouled Water'},
-		{name = 'Affi', idTable = geasFeteZitahIDs, tableType = "Geas Fete Zi'Tah Items"},
-		{name = 'Dremi', idTable = geasFeteRuaunIDs, tableType = "Geas Fete Ru'Aun Items"},
-		{name = 'Shiftrix', idTable = geasFeteReisenjimaIDs, tableType = "Geas Fete Reisenjima Items"},
+		{name = 'Shami', idTable = sealIDs, tableType = 'Seals', loopable = true, loopWait = 3},
+		{name = 'Ephemeral Moogle', idTable = crystalIDs, tableType = 'Crystals', loopable = true, loopWait = 9},
+		{name = 'Waypoint', idTable = crystalIDs, tableType = 'Crystals', loopable = true, loopWait = 3},
+		{name = 'Joulet', idTable = moatCarpIDs, tableType = 'Moat Carp', loopable = true, loopWait = 4},
+		{name = 'Gallijaux', idTable = moatCarpIDs, tableType = 'Moat Carp', loopable = true, loopWait = 4},
+		{name = 'Isakoth', idTable = copperVoucherIDs, tableType = 'Copper Vouchers', loopable = true, loopWait = 3},
+		{name = 'Rolandienne', idTable = copperVoucherIDs, tableType = 'Copper Vouchers', loopable = true, loopWait = 3},
+		{name = 'Fhelm Jobeizat', idTable = copperVoucherIDs, tableType = 'Copper Vouchers', loopable = true, loopWait = 3},
+		{name = 'Eternal Flame', idTable = copperVoucherIDs, tableType = 'Copper Vouchers', loopable = true, loopWait = 3},
+		{name = 'Monisette', idTable = remsTaleIDs, tableType = "Rem's Tales", loopable = true, loopWait = 3},
+		{name = '???', idTable = mellidoptWingIDs, tableType = 'Mellidopt Wings', loopable = true, loopWait = 5},
+		{name = 'Mrohk Sahjuuli', idTable = salvagePlanIDs, tableType = 'Salvage Plans', loopable = true, loopWait = 5},
+		{name = 'Paparoon', idTable = alexandriteIDs, tableType = 'Alexandrite', loopable = true, loopWait = 5},
+		{name = 'Mystrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys', loopable = true, loopWait = 14},
+		{name = 'Habitox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys', loopable = true, loopWait = 14},
+		{name = 'Bountibox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys', loopable = true, loopWait = 14},
+		{name = 'Specilox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys', loopable = true, loopWait = 14},
+		{name = 'Arbitrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys', loopable = true, loopWait = 14},
+		{name = 'Funtrox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys', loopable = true, loopWait = 14},
+		{name = 'Priztrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys', loopable = true, loopWait = 14},
+		{name = 'Sweepstox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys', loopable = true, loopWait = 14},
+		{name = 'Wondrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys', loopable = true, loopWait = 14},
+		{name = 'Rewardox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys', loopable = true, loopWait = 14},
+		{name = 'Winrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys', loopable = true, loopWait = 14},
+		{name = 'Talib', idTable = zincOreIDs, tableType = 'Zinc Ore', loopable = true, loopWait = 3},
+		{name = 'Nanaa Mihgo', idTable = yagudoNecklaceIDs, tableType = 'Yagudo Necklaces', loopable = true, loopWait = 10},
+		{name = 'Yoran-Oran', idTable = mandragoraMadIDs, tableType = 'Mandragora Mad Items', loopable = true, loopWait = 8},
+		{name = 'Melyon', idTable = onlyTheBestIDs, tableType = 'Only the Best Items', loopable = true, loopWait = 10},
+		{name = 'Sanraku', idTable = soulPlateIDs, tableType = 'Soul Plates', loopable = true, loopWait = 10},
+		{name = 'A.M.A.N. Reclaimer', idTable = jseCapeIDs, tableType = 'JSE Capes', loopable = true, loopWait = 6},
+		{name = 'Makel-Pakel', idTable = jseCapeIDs, tableType = 'JSE Capes x3', loopable = false, loopWait = 0},
+		{name = 'Sagheera', idTable = ancientBeastcoinIDs, tableType = 'Ancient Beastcoins', loopable = true, loopWait = 3},
+		{name = 'Oseem', idTable = reisenjimaStones, tableType = 'Reisenjima Stones', loopable = true, loopWait = 5},
+		{name = 'Odyssean Passage', idTable = befouledWaterIDs, tableType = 'Befouled Water', loopable = false, loopWait = 10},
+		{name = 'Affi', idTable = geasFeteZitahIDs, tableType = "Geas Fete Zi'Tah Items", loopable = false, loopWait = 0},
+		{name = 'Dremi', idTable = geasFeteRuaunIDs, tableType = "Geas Fete Ru'Aun Items", loopable = false, loopWait = 0},
+		{name = 'Shiftrix', idTable = geasFeteReisenjimaIDs, tableType = "Geas Fete Reisenjima Items", loopable = false, loopWait = 0},
 	}
 	
 	local idTable = {}
@@ -281,6 +332,7 @@ windower.register_event('addon command', function(arg1,  ...)
 
 		if not target then
 			print('QuickTrade: No target selected')
+			loopCount = 0
 			return
 		end
 	end
@@ -289,6 +341,8 @@ windower.register_event('addon command', function(arg1,  ...)
 		if target.name == npcTable[i].name then
 			idTable = npcTable[i].idTable
 			tableType = npcTable[i].tableType
+			loopable = npcTable[i].loopable
+			loopWait = npcTable[i].loopWait
 			break
 		end
 	end
@@ -305,6 +359,8 @@ windower.register_event('addon command', function(arg1,  ...)
 	if #idTable == 0 or tableType == '' then
 		print('QuickTrade: Invalid target')
 		lastNPC = ''
+		lastLoopNPC = ''
+		loopCount = 0
 		return
 	end
 
@@ -342,7 +398,7 @@ windower.register_event('addon command', function(arg1,  ...)
 	end
 
 	-- Uses the Itemizer addon to move tradable items from the mog case/sack into the player's inventory
-	if arg1 == 'all' and mogCase and mogSack then
+	if arg == 'all' and mogCase and mogSack then
 		inventory = windower.ffxi.get_items('inventory')
 		for i = 1, #idTable do
 			for k, v in ipairs(inventory) do
@@ -358,7 +414,7 @@ windower.register_event('addon command', function(arg1,  ...)
 				if exampleOnly then
 					print('//get "' .. mogSackTable[i].name ..  '" ' .. idTable[i].count + mogSackTable[i].count + mogCaseTable[i].count)
 				else
-					windower.add_to_chat(8, 'QuickTrade: Please wait - Using Itemizer to transfer ' .. mogSackTable[i].count + mogCaseTable[i].count .. ' ' .. mogSackTable[i].name .. ' to inventory')
+					windower.add_to_chat(4, 'QuickTrade: Please wait - Using Itemizer to transfer ' .. mogSackTable[i].count + mogCaseTable[i].count .. ' ' .. mogSackTable[i].name .. ' to inventory')
 					windower.send_command('input //get "' .. mogSackTable[i].name ..  '" ' .. idTable[i].count + mogSackTable[i].count + mogCaseTable[i].count)
 					coroutine.sleep(2.5)
 				end
@@ -372,6 +428,17 @@ windower.register_event('addon command', function(arg1,  ...)
 	else
 		if target.name ~= lastNPC then
 			lastNPC = target.name
+
+			if loopModeSet then
+				if lastLoopNPC == '' then
+					lastLoopNPC = target.name
+				else
+					print('New NPC detected after trade loop started. Aborting to prevent accidental trades.')
+					loopCount = 0
+					return
+				end
+			end
+
 			local mogCount = 0
 
 			for i = 1, #mogSackTable do
@@ -379,7 +446,7 @@ windower.register_event('addon command', function(arg1,  ...)
 			end
 			
 			if mogCount > 0 then
-				windower.add_to_chat(8, 'QuickTrade: ' .. mogCount .. ' of these items are in your mog sack/case. Type "//qtr all" if you wish to move them into your inventory and trade them. Requires Itemizer')
+				windower.add_to_chat(4, 'QuickTrade: ' .. mogCount .. ' of these items are in your mog sack/case. Type "//qtr all" if you wish to move them into your inventory and trade them. Requires Itemizer')
 			end
 		end
 	end
@@ -389,6 +456,13 @@ windower.register_event('addon command', function(arg1,  ...)
 
 	if not inventory then
 		print('QuickTrade: Unable to read inventory')
+		loopCount = 0
+		return
+	end
+
+	if tableType == 'Special Gobbiedial Keys' and inventory.count == inventory.max then
+		windower.add_to_chat(4, 'QuickTrade: Inventory full. Cancelling Special Gobbiedial Key Trades.')
+		loopCount = 0
 		return
 	end
 
@@ -543,7 +617,7 @@ windower.register_event('addon command', function(arg1,  ...)
 					end
 				end
 			end
-		elseif tableType == "Geas Fete Zi'Tah Items" or tableType == "Geas Fete Ru'Aun Items" or tableType == "Geas Fete Reisenjima Items"then
+		elseif tableType == "Geas Fete Zi'Tah Items" or tableType == "Geas Fete Ru'Aun Items" or tableType == "Geas Fete Reisenjima Items" then
 			for i = 1, #idTable do
 				if idTable[i].count >= idTable[i].minimum then
 					tradeString = '//tradenpc ' .. idTable[i].minimum .. ' "' .. idTable[i].name .. '"'
@@ -553,11 +627,12 @@ windower.register_event('addon command', function(arg1,  ...)
 			end
 		else
 			for i = 1, #idTable do
+				loopable = true -- May not work for everything
+
 				tradeString = '//tradenpc '
 				availableTradeSlots = 8
 				
 				if idTable[i].count > 0 then
-					--availableTradeSlots = math.max(1, availableTradeSlots - idTable[i].stacks)
 					tradeString = tradeString .. math.min(availableTradeSlots * idTable[i].stacksize, idTable[i].count) .. ' "' .. idTable[i].name .. '"'
 					break
 				end
@@ -565,12 +640,27 @@ windower.register_event('addon command', function(arg1,  ...)
 		end
 
 		if tradeString ~= '//tradenpc ' then
-			if numTrades - 1 == 0 then
-				windower.add_to_chat(8, 'QuickTrade: Trading Complete')
-			elseif numTrades - 1 == 1 then
-				windower.add_to_chat(8, 'QuickTrade: ' .. (numTrades - 1) .. ' trade remaining')
+			if loopModeSet and loopable then
+				loopCount = numTrades
+
+				if loopMax ~= 100000 then
+					numTrades = loopMax - loopCurrent + 1
+					loopText = ' Loop: ' .. loopCurrent .. '/' .. loopMax
+				else
+					loopMax = numTrades
+					loopText = ' Loop: ' .. loopCurrent .. '/' .. numTrades
+				end
 			else
-				windower.add_to_chat(8, 'QuickTrade: ' .. (numTrades - 1) .. ' trades remaining')
+				loopCount = 0
+				loopText = ''
+			end
+
+			if numTrades - 1 == 0 then
+				windower.add_to_chat(4, 'QuickTrade: Trading Complete.' .. loopText)
+			elseif numTrades - 1 == 1 then
+				windower.add_to_chat(4, 'QuickTrade: ' .. (numTrades - 1) .. ' trade remaining.' .. loopText)
+			else
+				windower.add_to_chat(4, 'QuickTrade: ' .. (numTrades - 1) .. ' trades remaining.' .. loopText)
 			end
 			
 			if exampleOnly then
@@ -584,18 +674,25 @@ windower.register_event('addon command', function(arg1,  ...)
 			end
 
 			if string.find(tableType, 'Geas Fete') then
-				windower.add_to_chat(8, 'QuickTrade: Trading '.. tradeList)
-				windower.add_to_chat(8, "QuickTrade: Don't forget your Tribulens or Radialens!")
+				windower.add_to_chat(4, 'QuickTrade: Trading '.. tradeList)
+				windower.add_to_chat(4, "QuickTrade: Don't forget your Tribulens or Radialens!")
+			end
+
+			if loopModeSet then
+				loopCount = loopCount - 1
 			end
 		end
 	else
-		if arg1 == 'all' then
-			windower.add_to_chat(8, "QuickTrade - No " .. tableType .. " in inventory, mog case, or mog sack")
+		if arg == 'all' then
+			windower.add_to_chat(4, "QuickTrade - No " .. tableType .. " in inventory, mog case, or mog sack")
 		else
-			windower.add_to_chat(8, "QuickTrade - No " .. tableType .. " in inventory")
+			windower.add_to_chat(4, "QuickTrade - No " .. tableType .. " in inventory")
 		end
+
+		loopCount = 0
+		loopModeSet = false
 	end
-end)
+end
  
 windower.register_event('incoming text', function(original, modified, mode)
 	-- Allow the addon to skip the conversation text for up to 10 seconds after the trade
