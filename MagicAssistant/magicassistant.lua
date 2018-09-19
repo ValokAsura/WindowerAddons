@@ -27,6 +27,9 @@ local targetmode = 'bt' -- t or bt. BT can be a little unreliable if your party 
 -- Maybe I can get the mob ID of the mob found in the incoming chunk and compare it to the target ID when the MB command is run
 -- Can possibly abort the MB if the IDs don't match
 
+local ignoreWeather = false
+local ignoreDay = true
+
 local partyAnnounce = false -- Announce the skillchain in party chat when it occurs
 local partyCall = false -- Add a call to the party announcement
 local callNumber = 20 -- Specify the call number
@@ -514,10 +517,10 @@ function MBOrBestOffer(spell_selectedType, spell_selectedTier, forced)
 	end
 
 	-- Determine which benefits the spell most; Weather, day, or priority
-	if weather_element and T(activeSkillchain.elements):contains(weather_element) then
+	if not ignoreWeather and weather_element and T(activeSkillchain.elements):contains(weather_element) then
 		skillchain_element = weather_element
 		if debug then print('Bursting weather element: ' .. skillchain_element) end
-	elseif day_element ~= nil and elements[day_element][spell_selectedType] and T(activeSkillchain.elements):contains(day_element) then
+	elseif not ignoreDay and day_element ~= nil and elements[day_element][spell_selectedType] and T(activeSkillchain.elements):contains(day_element) then
 		skillchain_element = day_element
 		if debug then print('Bursting day element: ' .. skillchain_element) end
 	else -- If weather or day provide no benefit, just go by priority
