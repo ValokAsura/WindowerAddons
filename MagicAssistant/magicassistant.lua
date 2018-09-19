@@ -21,9 +21,9 @@ spells = res.spells
 
 
 -- // User-adjustable settings
-local debug = true
+local debug = false
 local showSkillchainInChatWindow = true -- Private notification
-local targetmode = 't' -- t or bt. BT can be a little unreliable if your party is fighting multiple red-named mobs
+local targetmode = 'bt' -- t or bt. BT can be a little unreliable if your party is fighting multiple red-named mobs
 -- Maybe I can get the mob ID of the mob found in the incoming chunk and compare it to the target ID when the MB command is run
 -- Can possibly abort the MB if the IDs don't match
 
@@ -553,7 +553,7 @@ end
 
 function mobExceptions(skillchain_element, forced)
 	local battle_target = windower.ffxi.get_mob_by_target(targetmode)
-	if debug then print('Target: ' .. battle_target.name) end
+	if debug and battle_target then print('Target: ' .. battle_target.name) end
 
 	if not battle_target then
 		return skillchain_element
