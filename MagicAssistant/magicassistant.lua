@@ -276,25 +276,24 @@ windower.register_event('addon command', function(...)
 		activeSkillchain.skillchain = nil
 	end
 
+	target = windower.ffxi.get_mob_by_target('t')
+	
+	if not target then
+		print('MAA: No target selected')
+		return
+	end
+
 	if #arg == 0 then -- random testing
-		if os.clock() - activeSkillchain.startTime < maxPostSkillchainBurstTime then
-			target = windower.ffxi.get_mob_by_target('t')
-
-			if target then
-				if target.id == activeSkillchain.targetID then
-					print('This is the skillchain target')
-				else
-					print('This is NOT the skillchain target')
-				end
-			end
-		end
-
-		if true then return end
-
 		print('- MagicAssistant (maa) valid commands -')
 		print('-  maa ["spell base name"] [tier]                Example:  maa Fire 4,        maa Waterga 3,   maa Aspir Best')
 		print('-  maa mb [spell/helix/ga/ja/ra/nin] [tier]      Example:  maa mb spell 4,    maa mb nin 2,    maa mb helix 2')
 		print('-  maa force [spell/helix/ga/ja/ra/nin] [tier]   Example:  maa force spell 4, maa force nin 3, maa force helix 2')
+	elseif arg[1] == 'colors' then
+		for i = 1, 60 do
+			windower.add_to_chat(i, 'Testing Color: ' .. i)
+		end
+	elseif arg[1] == 'test' then
+
 	elseif #arg == 2 then
 		if string.lower(arg[2]) ~= 'best' and not T({1, 2, 3, 4, 5, 6}):contains(tonumber(arg[2])) then
 			print('MAA: Invalid Tier. Valid examples are: 1, 2, 3, 4, 5, 6, or Best')
@@ -310,7 +309,6 @@ windower.register_event('addon command', function(...)
 			--activeSkillchain.startTime = os.clock() - 2
 			--activeSkillchain.skillchain = anyNuke
 
-
 			if (os.clock() - activeSkillchain.startTime > maxPostSkillchainBurstTime or not activeSkillchain.skillchain) and not forced then
 				print('MAA: No Skillchain detected. MB Aborted')
 				return
@@ -319,6 +317,9 @@ windower.register_event('addon command', function(...)
 				return
 			elseif string.lower(arg[3]) ~= 'best' and not T({6, 5, 4, 3, 2, 1}):contains(tonumber(arg[3])) then
 				print('MAA Invalid MB Tier. Valid options: 1, 2, 3, 4, 5, 6, Best')
+				return
+			elseif activeSkillchain.targetID ~= target.id then
+				print('MAA: No skillchain active on target')
 				return
 			else
 				if debug then print('MB: ' .. arg[2] .. ' ' .. arg[3]) end
@@ -636,7 +637,7 @@ windower.register_event('incoming chunk', function(id, orig)
 		end
 
 		local battle_target = windower.ffxi.get_mob_by_target(targetmode)
-		local msg = orig:unpack('b10', 29, 7) -- Maybe we don't need this? Find another way that's readable
+		local msg = orig:unpack('b10', 29, 7) -- Maybe we don't need this? Find another way that's more readable
 
 		if T({2, 110, 161, 162, 187, 317}):contains(msg) then
 			if superdebug then print('MAA: Unknown msg = ' .. msg) end
