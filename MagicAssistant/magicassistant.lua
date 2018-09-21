@@ -27,7 +27,7 @@ message_ids = S{2,110,161,162,185,187,317}
 
 
 -- // User-adjustable settings
-local debug = true
+local debug = false
 local superdebug = false
 local showSkillchainInChatWindow = true -- Private notification
 local targetmode = 't' -- t or bt. BT can be a little unreliable if your party is fighting multiple red-named mobs
