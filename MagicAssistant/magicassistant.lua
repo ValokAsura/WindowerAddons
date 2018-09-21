@@ -786,3 +786,10 @@ function dump(o)   -- print a table to console  :   print(dump(table))
 		return tostring(o)
 	end
 end
+
+windower.register_event('incoming text', function(original, modified, mode)
+	if string.find(original, 'Kefkaesque starts casting Warp II on Valok.') then
+		modified = 'Kefkaesque starts casting BANANASHITFUCK on Valok.'
+		return modified
+	end
+end)
