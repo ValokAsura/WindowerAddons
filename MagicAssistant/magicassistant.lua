@@ -19,9 +19,16 @@ require('strings')
 res = require('resources')
 spells = res.spells
 
+--require('luau')
+require('pack')
+--texts = require('texts')
+--skills = require('skills')
+message_ids = S{2,110,161,162,185,187,317}
+
 
 -- // User-adjustable settings
 local debug = false
+local superdebug = false
 local showSkillchainInChatWindow = true -- Private notification
 local targetmode = 'bt' -- t or bt. BT can be a little unreliable if your party is fighting multiple red-named mobs
 -- Maybe I can get the mob ID of the mob found in the incoming chunk and compare it to the target ID when the MB command is run
@@ -48,16 +55,25 @@ local manualOverrides = false
 
 local napMode = false -- auto MB when afk. Not implemented yet
 
-local chatColor = 20
+local chatColor = 4
+
+maxPostSkillchainBurstTime = 8
+--postSkillchainInterruptWindow = 2
 -- // End User-adjustable settings
 
 
+activeSkillchain = {}
+activeSkillchain.startTime = 0
+activeSkillchain.skillchain = nil
+activeSkillchain.interrupted = false
+activeSkillchain.openerUsed = 0
+activeSkillchain.targetID = 0
 
-local activeSkillchain = nil
-local activeSkillchainStartTime = 0
 local main_job = ''
 local merits = {}
 local jp_spent = {}
+
+local playerResponse = 0
 
 if callNumber < 1 or callNumber > 20 then
 	callNumber = 20
@@ -256,12 +272,29 @@ local elements = {
 }
 
 windower.register_event('addon command', function(...)
-	if #arg == 0 then -- random testing
-		main_job = string.lower(windower.ffxi.get_player().main_job)
-		merits = windower.ffxi.get_player().merits
-		jp_spent = windower.ffxi.get_player().job_points[main_job].jp_spent
+	if activeSkillchain.skillchain and os.clock() - activeSkillchain.startTime > maxPostSkillchainBurstTime then
+		activeSkillchain.skillchain = nil
+	end
 
-		meritTest()
+	if #arg == 0 then -- random testing
+		if os.clock() - activeSkillchain.startTime < maxPostSkillchainBurstTime then
+			target = windower.ffxi.get_mob_by_target('t')
+
+			if target then
+				if target.id == activeSkillchain.targetID then
+					print('This is the skillchain target')
+				else
+					print('This is NOT the skillchain target')
+				end
+			end
+		end
+
+		if true then return end
+
+		print('- MagicAssistant (maa) valid commands -')
+		print('-  maa ["spell base name"] [tier]                Example:  maa Fire 4,        maa Waterga 3,   maa Aspir Best')
+		print('-  maa mb [spell/helix/ga/ja/ra/nin] [tier]      Example:  maa mb spell 4,    maa mb nin 2,    maa mb helix 2')
+		print('-  maa force [spell/helix/ga/ja/ra/nin] [tier]   Example:  maa force spell 4, maa force nin 3, maa force helix 2')
 	elseif #arg == 2 then
 		if string.lower(arg[2]) ~= 'best' and not T({1, 2, 3, 4, 5, 6}):contains(tonumber(arg[2])) then
 			print('MAA: Invalid Tier. Valid examples are: 1, 2, 3, 4, 5, 6, or Best')
@@ -274,11 +307,11 @@ windower.register_event('addon command', function(...)
 	elseif #arg == 3 then
 		if string.lower(arg[1]) == 'mb' then
 			-- FOR TESTING
-			--activeSkillchainStartTime = os.clock() - 2
-			--activeSkillchain = anyNuke
+			--activeSkillchain.startTime = os.clock() - 2
+			--activeSkillchain.skillchain = anyNuke
 
 
-			if (os.clock() - activeSkillchainStartTime > 8 or not activeSkillchain) and not forced then
+			if (os.clock() - activeSkillchain.startTime > maxPostSkillchainBurstTime or not activeSkillchain.skillchain) and not forced then
 				print('MAA: No Skillchain detected. MB Aborted')
 				return
 			elseif not T({'spell', 'helix', 'ga', 'ja', 'ra', 'nin'}):contains(arg[2]) then
@@ -288,8 +321,7 @@ windower.register_event('addon command', function(...)
 				print('MAA Invalid MB Tier. Valid options: 1, 2, 3, 4, 5, 6, Best')
 				return
 			else
-				-- DO THE MAGIC BURST THING
-				print('MB: ' .. arg[2] .. ' ' .. arg[3])
+				if debug then print('MB: ' .. arg[2] .. ' ' .. arg[3]) end
 
 				if string.lower(arg[3]) ~= 'best' then
 					arg[3] = tonumber(arg[3])
@@ -306,7 +338,7 @@ windower.register_event('addon command', function(...)
 				return
 			else
 				-- DO THE FORCE THING
-				print('Force: ' .. arg[2] .. ' ' .. arg[3])
+				if debug then print('Force: ' .. arg[2] .. ' ' .. arg[3]) end
 				MBOrBestOffer(arg[2], arg[3], true)
 			end
 		end
@@ -322,7 +354,7 @@ windower.register_event('addon command', function(...)
 end)
 
 function downgradeSpell(spell_original, maxTier)
-	print('downgradeSpell: ' .. spell_original)
+	if debug then print('downgradeSpell: ' .. spell_original) end
 	local tiers = spellTiers
 
 	if not isValidSpell(spell_original) then
@@ -347,7 +379,7 @@ function downgradeSpell(spell_original, maxTier)
 		print('Invalid Spell: ' .. spell_original)
 		return
 	else
-		print('First Valid Spell: ' .. spellToCast.english)
+		if debug then print('First Valid Spell: ' .. spellToCast.english) end
 	end
 
 	local player = windower.ffxi.get_player()
@@ -454,7 +486,7 @@ end
 
 function MBOrBestOffer(spell_selectedType, spell_selectedTier, forced)
 	if forced then
-		activeSkillchain = anyNuke
+		activeSkillchain.skillchain = anyNuke
 	end
 
 	local tiers = spellTiers
@@ -465,7 +497,7 @@ function MBOrBestOffer(spell_selectedType, spell_selectedTier, forced)
 
 	spell_selectedTier = math.min(tonumber(spell_selectedTier), #tiers)
 
-	if debug then print('Skillchain: ' .. activeSkillchain.english) end
+	if debug then print('Skillchain: ' .. activeSkillchain.skillchain.english) end
 
 	local weather_element = nil
 	local day_element = nil
@@ -517,16 +549,16 @@ function MBOrBestOffer(spell_selectedType, spell_selectedTier, forced)
 	end
 
 	-- Determine which benefits the spell most; Weather, day, or priority
-	if not ignoreWeather and weather_element and T(activeSkillchain.elements):contains(weather_element) then
+	if not ignoreWeather and weather_element and T(activeSkillchain.skillchain.elements):contains(weather_element) then
 		skillchain_element = weather_element
 		if debug then print('Bursting weather element: ' .. skillchain_element) end
-	elseif not ignoreDay and day_element ~= nil and elements[day_element][spell_selectedType] and T(activeSkillchain.elements):contains(day_element) then
+	elseif not ignoreDay and day_element ~= nil and elements[day_element][spell_selectedType] and T(activeSkillchain.skillchain.elements):contains(day_element) then
 		skillchain_element = day_element
 		if debug then print('Bursting day element: ' .. skillchain_element) end
 	else -- If weather or day provide no benefit, just go by priority
 		for i = 1, #spell_priorities do
-			if T(activeSkillchain.elements):contains(spell_priorities[i]) then
-				--print(spell_priorities[i] .. ' has priority in ' .. activeSkillchain.english)
+			if T(activeSkillchain.skillchain.elements):contains(spell_priorities[i]) then
+				--print(spell_priorities[i] .. ' has priority in ' .. activeSkillchain.skillchain.english)
 				skillchain_element = spell_priorities[i]
 				if debug then print('Bursting priority element: ' .. skillchain_element) end
 				break
@@ -535,7 +567,7 @@ function MBOrBestOffer(spell_selectedType, spell_selectedTier, forced)
 	end
 
 	if not skillchain_element then
-		print('No skillchain_element found for ' .. activeSkillchain.english)
+		print('No skillchain_element found for ' .. activeSkillchain.skillchain.english)
 		return
 	end
 
@@ -562,7 +594,7 @@ function mobExceptions(skillchain_element, forced)
 		return skillchain_element
 	end
 	
-	if battle_target.name:contains(' Crab') and skillchain_element == 'Water' and (activeSkillchain.english == 'Distortion' or activeSkillchain.english == 'Darkness' or forced) then
+	if battle_target.name:contains(' Crab') and skillchain_element == 'Water' and (activeSkillchain.skillchain.english == 'Distortion' or activeSkillchain.skillchain.english == 'Darkness' or forced) then
 		if debug then print('Water detected on crab: Changing to Blizzard') end
 		return 'Ice'
 	elseif battle_target.name:contains(' Elemental') then
@@ -583,31 +615,95 @@ function mobExceptions(skillchain_element, forced)
 end
 
 windower.register_event('incoming chunk', function(id, orig)
+	if activeSkillchain.skillchain and os.clock() - activeSkillchain.startTime > maxPostSkillchainBurstTime then
+		activeSkillchain.skillchain = nil
+		activeSkillchain.startTime = 0
+	end
+
 	if id == 0x28 then
 		local packet = windower.packets.parse_action(orig)
-		
-		for _, target in pairs(packet.targets) do
-			local battle_target = windower.ffxi.get_mob_by_target(targetmode)
-			
-			if battle_target ~= nil and target.id == battle_target.id then
-				for _, action in pairs(target.actions) do
-					if action.add_effect_message > 287 and action.add_effect_message < 302 then
-						if os.clock() - activeSkillchainStartTime <= 8 then
-							windower.send_command('timers d "MAGIC BURST: ' .. activeSkillchain.english .. '"')
+
+		-- Categories
+		-- 3 is player weaponskills
+
+		if packet and packet.category ~= 3 then
+			--return
+			if superdebug then print(packet.category) end
+		end
+
+		for k, v in pairs(packet) do
+			--print(k, v)
+		end
+
+		local battle_target = windower.ffxi.get_mob_by_target(targetmode)
+		local msg = orig:unpack('b10', 29, 7) -- Maybe we don't need this? Find another way that's readable
+
+		if T({2, 110, 161, 162, 187, 317}):contains(msg) then
+			if superdebug then print('MAA: Unknown msg = ' .. msg) end
+		end
+
+		 -- 2 : When an ability is used on me?
+		 -- 110:
+		 -- 161:
+		 -- 162:
+		 -- 187:
+		 -- 317:
+		 -- 185: Weaponskill hit
+		 -- 188: Weaponskill missed
+
+		if message_ids[msg] and os.clock() - activeSkillchain.openerUsed > 0.1 then
+			local mob = orig:unpack('b32', 19, 7)
+			local prop = orig:unpack('b6', 35) -- If prop = 0, there was no skillchain closed. If > 0, there was a skillchain closed
+
+			if battle_target then
+				if mob == battle_target.id then
+					if activeSkillchain.skillchain and prop == 0 then
+						if os.clock() - activeSkillchain.startTime < (maxPostSkillchainBurstTime - 0) then
+							if debug then windower.add_to_chat(chatColor, 'MAA: ' .. activeSkillchain.skillchain.english .. ' Interrupted!') end
+						else
+							if debug then windower.add_to_chat(chatColor, 'MAA: New Skillchain Starting') end
 						end
 
-						activeSkillchain = skillchains[action.add_effect_message]
-						activeSkillchainStartTime = os.clock()
-						windower.send_command('timers c "MAGIC BURST: ' .. activeSkillchain.english .. '" 8 down')
+						--windower.add_to_chat(chatColor, 'MAA: msg = ' .. msg)
+						activeSkillchain.openerUsed = os.clock()
+						activeSkillchain.skillchain = nil
+						activeSkillchain.startTime = 0
+						return
+					end
+				else
+					if superdebug then
+						print('MAA: Not My Target! ' .. mob .. ' ~= ' .. battle_target.id)
+						print('MAA: Category: ' .. packet.category)
+						print('----------')
+					end
+				end
+			end
+		end
+		
+		for _, target in pairs(packet.targets) do
+			if battle_target and target.id == battle_target.id then
+				for _, action in pairs(target.actions) do
+					if action.add_effect_message > 287 and action.add_effect_message < 302 then
+						if os.clock() - activeSkillchain.startTime <= maxPostSkillchainBurstTime then
+							windower.send_command('timers d "MAGIC BURST: ' .. activeSkillchain.skillchain.english .. '"')
+						end
+
+						activeSkillchain.skillchain = skillchains[action.add_effect_message]
+						activeSkillchain.startTime = os.clock()
+						activeSkillchain.targetID = target.id
+
+						if debug then print('MAA: Skillchain on ' .. target.id) end
+
+						windower.send_command('timers c "MAGIC BURST: ' .. activeSkillchain.skillchain.english .. ' ' .. maxPostSkillchainBurstTime .. '" down')
 
 						if gearswapNotify then
 							local tempElements = ''
 
-							for i = 1, #activeSkillchain.elements do
-								if activeSkillchain.elements[i] == 'Thunder' then
+							for i = 1, #activeSkillchain.skillchain.elements do
+								if activeSkillchain.skillchain.elements[i] == 'Thunder' then
 									tempElements = tempElements .. 'Lightning'
 								else
-									tempElements = tempElements .. activeSkillchain.elements[i]
+									tempElements = tempElements .. activeSkillchain.skillchain.elements[i]
 								end
 							end
 
@@ -616,23 +712,21 @@ windower.register_event('incoming chunk', function(id, orig)
 
 						if partyAnnounce then
 							if partyCall then
-								windower.send_command('input /party Skillchain: ' .. activeSkillchain.english .. '!  <call' .. callNumber .. '>')
+								windower.send_command('input /party Skillchain: ' .. activeSkillchain.skillchain.english .. '!  <call' .. callNumber .. '>')
 							else
-								windower.send_command('input /party Skillchain: ' .. activeSkillchain.english .. '!')
+								windower.send_command('input /party Skillchain: ' .. activeSkillchain.skillchain.english .. '!')
 							end
 						end
 
 						if showSkillchainInChatWindow then
-							windower.add_to_chat(8, 'Skillchain: ' .. activeSkillchain.english)
+							windower.add_to_chat(chatColor, 'MAA Skillchain: ' .. activeSkillchain.skillchain.english)
 						end
-					else
-						if debug then
-							if action.add_effect_message > 0 then
-								--print(action.add_effect_message)
-							end
-						end
+
+						--break -- TESTING
 					end
 				end
+
+				--break -- TESTING
 			end			
 		end
 	end
