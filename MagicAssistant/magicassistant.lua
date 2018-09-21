@@ -208,7 +208,7 @@ ninjutsu = {
 	'kakka',
 }
 
-local skillchains = { -- What about Radiance and Umbra?
+skillchains = { -- What about Radiance and Umbra?
 	[288] = {english = 'Light', elements = {'Light', 'Fire', 'Thunder', 'Wind'}},
 	[289] = {english = 'Darkness', elements = {'Dark', 'Earth', 'Water', 'Ice'}},
 	[290] = {english = 'Gravitation', elements = {'Dark', 'Earth'}},
@@ -225,9 +225,9 @@ local skillchains = { -- What about Radiance and Umbra?
 	[301] = {english = 'Impaction', elements = {'Thunder'}},
 }
 
-local anyNuke = {english = 'AnyElement', elements = {'Fire', 'Thunder', 'Wind', 'Earth', 'Water', 'Ice'}}
+anyNuke = {english = 'AnyElement', elements = {'Fire', 'Thunder', 'Wind', 'Earth', 'Water', 'Ice'}}
 
-local spell_priorities = {
+spell_priorities = {
 	'Thunder',
 	'Ice',
 	'Fire',
@@ -238,7 +238,7 @@ local spell_priorities = {
 	'Light',
 }
 
-local spell_strengths = {
+spell_strengths = {
 	['Fire'] = {weakness = 'Water'},
 	['Ice'] = {weakness = 'Fire'},
 	['Wind'] = {weakness = 'Ice'},
@@ -249,7 +249,7 @@ local spell_strengths = {
 	['Light'] = {weakness = 'Ice'},
 }
 
-local storms = { 
+storms = { 
 	{name = 'Firestorm', weather = 'Fire'}, 
 	{name = 'Hailstorm', weather = 'Ice'}, 
 	{name = 'Windstorm', weather = 'Wind'}, 
@@ -260,7 +260,7 @@ local storms = {
 	{name = 'Voidstorm', weather = 'Dark'},
 }
 
-local elements = {
+elements = {
 	['Thunder'] = {spell = 'Thunder', helix = 'Ionohelix', ga = 'Thundaga', ja = 'Thundaja', ra = 'Thundara', nin = 'Raiton'},
 	['Ice'] = {spell = 'Blizzard', helix = 'Cryohelix', ga = 'Blizzaga', ja = 'Blizzaja', ra = 'Blizzara', nin = 'Hyoton'},
 	['Fire'] = {spell = 'Fire', helix = 'Pyrohelix', ga = 'Firaga', ja = 'Firaja', ra = 'Fira', nin = 'Katon'},
@@ -687,7 +687,6 @@ windower.register_event('incoming chunk', function(id, orig)
 					if action.add_effect_message > 287 and action.add_effect_message < 302 then
 
 						if os.clock() - activeSkillchain.startTime <= maxPostSkillchainBurstTime then
-							print('removing Timer')
 							windower.send_command('timers d "MAGIC BURST: ' .. activeSkillchain.skillchain.english .. '"')
 						end
 
