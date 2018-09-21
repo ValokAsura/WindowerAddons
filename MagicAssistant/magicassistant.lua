@@ -27,10 +27,10 @@ message_ids = S{2,110,161,162,185,187,317}
 
 
 -- // User-adjustable settings
-local debug = false
+local debug = true
 local superdebug = false
 local showSkillchainInChatWindow = true -- Private notification
-local targetmode = 'bt' -- t or bt. BT can be a little unreliable if your party is fighting multiple red-named mobs
+local targetmode = 't' -- t or bt. BT can be a little unreliable if your party is fighting multiple red-named mobs
 -- Maybe I can get the mob ID of the mob found in the incoming chunk and compare it to the target ID when the MB command is run
 -- Can possibly abort the MB if the IDs don't match
 
@@ -55,7 +55,7 @@ local manualOverrides = false
 
 local napMode = false -- auto MB when afk. Not implemented yet
 
-local chatColor = 4
+local chatColor = 36
 
 maxPostSkillchainBurstTime = 8
 --postSkillchainInterruptWindow = 2
