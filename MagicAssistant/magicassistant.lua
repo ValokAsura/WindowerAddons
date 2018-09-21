@@ -27,7 +27,7 @@ message_ids = S{2,110,161,162,185,187,317}
 
 
 -- // User-adjustable settings
-local debug = false
+local debug = true
 local superdebug = false
 local showSkillchainInChatWindow = true -- Private notification
 local targetmode = 't' -- t or bt. BT can be a little unreliable if your party is fighting multiple red-named mobs
@@ -515,7 +515,7 @@ function MBOrBestOffer(spell_selectedType, spell_selectedTier, forced)
 
 			for o = 1, #storms do
 				if buff_name == storms[o].name then
-					weather_element = storms[i].weather
+					weather_element = storms[o].weather
 					if debug then print('SCH Weather Buff Found: ' .. weather_element) end
 					break
 				end
@@ -526,7 +526,7 @@ function MBOrBestOffer(spell_selectedType, spell_selectedTier, forced)
 			end
 		end
 	end
-
+	
 	if not weather_element then
 		weather_element = res.elements[res.weather[windower.ffxi.get_info().weather].element].en
 		if debug then print('Weather Found: ' .. weather_element) end
@@ -660,7 +660,7 @@ windower.register_event('incoming chunk', function(id, orig)
 				if mob == battle_target.id then
 					if activeSkillchain.skillchain and prop == 0 then
 						if os.clock() - activeSkillchain.startTime < (maxPostSkillchainBurstTime - 0) then -- Left at 0 incase I feel it needs tweaking later
-							if debug then windower.add_to_chat(chatColor, 'MAA: ' .. activeSkillchain.skillchain.english .. ' Interrupted!') end
+							if showSkillchainInChatWindow then windower.add_to_chat(chatColor, 'MAA: ' .. activeSkillchain.skillchain.english .. ' Interrupted!') end
 						else
 							if debug then windower.add_to_chat(chatColor, 'MAA: New Skillchain Starting') end
 						end
