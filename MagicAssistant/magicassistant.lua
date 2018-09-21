@@ -55,7 +55,7 @@ local manualOverrides = false
 
 local napMode = false -- auto MB when afk. Not implemented yet
 
-local chatColor = 36
+local chatColor = 11
 
 maxPostSkillchainBurstTime = 8
 --postSkillchainInterruptWindow = 2
@@ -277,8 +277,8 @@ windower.register_event('addon command', function(...)
 	end
 
 	target = windower.ffxi.get_mob_by_target('t')
-	
-	if not target then
+
+	if #arg > 0 and not target then
 		print('MAA: No target selected')
 		return
 	end
@@ -659,7 +659,7 @@ windower.register_event('incoming chunk', function(id, orig)
 			if battle_target then
 				if mob == battle_target.id then
 					if activeSkillchain.skillchain and prop == 0 then
-						if os.clock() - activeSkillchain.startTime < (maxPostSkillchainBurstTime - 0) then
+						if os.clock() - activeSkillchain.startTime < (maxPostSkillchainBurstTime - 0) then -- Left at 0 incase I feel it needs tweaking later
 							if debug then windower.add_to_chat(chatColor, 'MAA: ' .. activeSkillchain.skillchain.english .. ' Interrupted!') end
 						else
 							if debug then windower.add_to_chat(chatColor, 'MAA: New Skillchain Starting') end
@@ -669,7 +669,7 @@ windower.register_event('incoming chunk', function(id, orig)
 						activeSkillchain.openerUsed = os.clock()
 						activeSkillchain.skillchain = nil
 						activeSkillchain.startTime = 0
-						return
+						--return
 					end
 				else
 					if superdebug then
@@ -680,12 +680,14 @@ windower.register_event('incoming chunk', function(id, orig)
 				end
 			end
 		end
-		
+
 		for _, target in pairs(packet.targets) do
 			if battle_target and target.id == battle_target.id then
 				for _, action in pairs(target.actions) do
 					if action.add_effect_message > 287 and action.add_effect_message < 302 then
+
 						if os.clock() - activeSkillchain.startTime <= maxPostSkillchainBurstTime then
+							print('removing Timer')
 							windower.send_command('timers d "MAGIC BURST: ' .. activeSkillchain.skillchain.english .. '"')
 						end
 
@@ -695,7 +697,7 @@ windower.register_event('incoming chunk', function(id, orig)
 
 						if debug then print('MAA: Skillchain on ' .. target.id) end
 
-						windower.send_command('timers c "MAGIC BURST: ' .. activeSkillchain.skillchain.english .. ' ' .. maxPostSkillchainBurstTime .. '" down')
+						windower.send_command('timers c "MAGIC BURST: ' .. activeSkillchain.skillchain.english .. '" ' .. maxPostSkillchainBurstTime .. ' down')
 
 						if gearswapNotify then
 							local tempElements = ''
@@ -723,11 +725,11 @@ windower.register_event('incoming chunk', function(id, orig)
 							windower.add_to_chat(chatColor, 'MAA Skillchain: ' .. activeSkillchain.skillchain.english)
 						end
 
-						--break -- TESTING
+						break -- TESTING
 					end
 				end
 
-				--break -- TESTING
+				break -- TESTING
 			end			
 		end
 	end
