@@ -3,10 +3,6 @@
 	Many thanks to Ryan Skeldon, the creator of the addon Grimoire.
 	This code borrows elements from his addon but is heavily modified.
 
-	Need to find a way to stop the magic burst timers if someone fucks it up by using a weaponskill after the skillchain
-	Incoming Text event from a party/alliance member that HITS with a weaponskill? Will this be fast enough?
-	Should be able to get the player's name as well
-
 ]]
 
 _addon.version = '1.0.0'
@@ -14,72 +10,643 @@ _addon.name = 'Magic Assistant'
 _addon.author = 'Valok@Asura'
 _addon.commands = {'magicassistant', 'maa'}
 
+require('coroutine')
 require('tables')
 require('strings')
 res = require('resources')
-spells = res.spells
+--spells = res.spells
 
---require('luau')
-require('pack')
---texts = require('texts')
---skills = require('skills')
-message_ids = S{2,110,161,162,185,187,317}
+packets = require('packets')
 
+--require('pack')
+skills = require('skills')
+validSCMessageIDs = S{2,110,161,162,185,187,317}
 
 -- // User-adjustable settings
-local debug = false
-local superdebug = false
-local showSkillchainInChatWindow = true -- Private notification
-local targetmode = 't' -- t or bt. BT can be a little unreliable if your party is fighting multiple red-named mobs
--- Maybe I can get the mob ID of the mob found in the incoming chunk and compare it to the target ID when the MB command is run
--- Can possibly abort the MB if the IDs don't match
+debug_user = false
+debug_dev = false
 
-local ignoreWeather = false
-local ignoreDay = true
+ignoreWeather = false
+ignoreDay = false
 
-local partyAnnounce = false -- Announce the skillchain in party chat when it occurs
-local partyCall = false -- Add a call to the party announcement
-local callNumber = 20 -- Specify the call number
+showSkillchainInChatWindow = false -- Private notification
+partyAnnounce = false -- Announce the skillchain in party chat when it occurs
+partyAnnounceFuckups = false
+partyCall = false -- Add a call to the party announcement
+callNumber = 20 -- Specify the call number
 
+chatColor = 11
+
+gearswapNotify = false -- gs c MAABurst
 -- Sends a command to gearswap that you can use to instruct gearswap to perform a certain action, such as equipping magic burst gear
 -- Examples:
 -- A Fusion skillchain will send:  MAABurst LightFire
 -- A Darkness skillchain will send: MAABurst DarkEarthWaterIce
 -- A Scission skil
-local gearswapNotify = false -- gs c MAABurst
 
+mobOverrides = false
 -- Experimental
 -- Can prevent you from bursting Water on a crab if you could burst something better
 -- Causes a FORCED spell on an elemental to cast the strongest element it is weakest to
-local manualOverrides = false
 
-local napMode = false -- auto MB when afk. Not implemented yet
+sidegradeBeforeDowngrade = false
+-- Experimental
+-- Will cast other elemental nukes in the same tier if the skillchain allows it, instead of casting lower tiers of the primary element.
 
-local chatColor = 11
+napMode = false -- auto MB when afk. Not implemented yet
 
 maxPostSkillchainBurstTime = 8
 --postSkillchainInterruptWindow = 2
 -- // End User-adjustable settings
 
-
 activeSkillchain = {}
-activeSkillchain.startTime = 0
-activeSkillchain.skillchain = nil
-activeSkillchain.interrupted = false
-activeSkillchain.openerUsed = 0
-activeSkillchain.targetID = 0
+target = nil
+skillchainTargets = {}
 
-local main_job = ''
-local merits = {}
-local jp_spent = {}
+frameTime = 0
 
-local playerResponse = 0
+main_job = ''
+merits = {}
+jp_spent = {}
 
 if callNumber < 1 or callNumber > 20 then
 	callNumber = 20
 end
 
-tierUnlocks = {
+
+
+-- GUI STUFF ///////////////////////
+config = require('config')
+texts = require('texts')
+file = require('files')
+require('luau') -- needed?
+
+textBoxEnabled = true
+
+display = {}
+display.pos = {}
+display.pos.x = 400
+display.pos.y = 500
+display.text = {}
+display.text.font = 'Courier New'
+display.text.size = 25
+display.flags = {}
+display.flags.bold = true
+display.flags.draggable = true
+display.bg = {}
+display.bg.alpha = 128
+
+settings = config.load(display)
+settings:save()
+
+skillchainsToShow = 1
+
+text = '${SC1TimeRemaining}${SC1Name|No Skillchain}${SC1TargetName}'
+
+for i = 2, skillchainsToShow do
+	text = text .. '\n${SC' .. i .. 'TimeRemaining}${SC' .. i .. 'Name}${SC' .. i .. 'TargetName}'
+end
+
+textBox = texts.new(text, settings)
+if textBoxEnabled then textBox:show() end
+
+colors = {}            -- Color codes by Sammeh
+colors.Gray =		   '\\cs(128, 128, 128)'
+colors.Gravitation =   '\\cs(102,51,0)'
+colors.Fragmentation = '\\cs(250,156,247)'
+colors.Fusion =        '\\cs(255,102,102)'
+colors.Distortion =    '\\cs(51,153,255)'
+colors.Darkness =      '\\cs(0,0,204)'
+colors.Umbra =         '\\cs(0,0,204)'
+colors.Compression =   '\\cs(0,0,204)'
+colors.Radiance =      '\\cs(255,255,255)'
+colors.Transfixion =   '\\cs(255,255,255)'
+colors.Induration =    '\\cs(0,255,255)'
+colors.Reverberation = '\\cs(0,0,255)'
+colors.Scission =      '\\cs(153,76,0)'
+colors.Detonation =    '\\cs(102,255,102)'
+colors.Liquefaction =  '\\cs(102,255,102)'
+colors.Impaction =     '\\cs(255,0,255)'
+
+windower.register_event('addon command', function(...)
+	for i = 1, #arg do
+		arg[i] = string.lower(arg[i])
+	end
+
+	activeSkillchain = nil
+
+	if #arg == 0 then
+
+	elseif arg[1] == 'help' then
+
+	elseif arg[1] == 'ex' then
+		if textBoxEnabled then skillchainTargets[12345] = {index = 130, name = 'TestName', skillchain = 289, startTime = os.clock()} end
+	elseif #arg == 2 or (#arg == 3 and arg[1] ~= 'mb' and arg[1] ~= 'force') then
+		if #arg == 2 then
+			arg[3] = 't'
+		end
+
+		if not T(validMacroTargets):contains(arg[3]) then
+			print('MAA: Invalid Target. Valid options: me, t, bt, ht, ft, st, stpc, stpt, stal, stnpc, lastst, r, pet, scan, p#, a#')
+		elseif not T({1, 2, 3, 4, 5, 6}):contains(tonumber(arg[2])) then
+			print('MAA: Invalid Tier. Valid options: 1, 2, 3, 4, 5, 6')
+		else
+			downgradeSpell(arg[1], tonumber(arg[2]), arg[3])
+		end
+	elseif (arg[1] == 'mb' or arg[1] == 'force') and #arg == 3 or #arg == 4 then
+		if not T({'spell', 'helix', 'ga', 'ja', 'ra', 'nin'}):contains(arg[2]) then
+			print('MAA: Invalid Spelltype. Valid options: spell, helix, ga, ja, ra, nin')
+		elseif not T({1, 2, 3, 4, 5, 6}):contains(tonumber(arg[3])) then
+			print('MAA: Invalid Tier. Valid options: 1, 2, 3, 4, 5, 6')
+		else
+			if #arg == 3 then
+				arg[4] = 't'
+			end
+
+			if #arg[1] == 'force' and not T(validMacroTargets):contains(arg[4]) then
+				print('MAA: Invalid Target. Valid options: me, t, bt, ht, ft, st, stpc, stpt, stal, stnpc, lastst, r, pet, scan, p#, a#')
+			elseif #arg[1] == 'mb' and not T(validMBMacroTargets):contains(arg[4]) then
+				print('MAA: Invalid Target. Valid options: t, bt, ht, scan')
+			else
+				if arg[1] == 'force' then
+					if not activeSkillchain then
+						activeSkillchain = anyNuke
+					end
+
+					MBOrBestOffer(arg[2], tonumber(arg[3]), true, arg[4])
+				else
+					target = windower.ffxi.get_mob_by_target(arg[4])
+
+					if target and skillchainTargets[target.id] then
+						activeSkillchain = skillchains[skillchainTargets[target.id].skillchain]
+						MBOrBestOffer(arg[2], tonumber(arg[3]), false, arg[4])
+					else
+						print('MAA: No Skillchain detected. MB Aborted')
+					end
+				end
+			end
+		end
+	else
+		local badCommand = 'maa '
+
+		for i = 1, #arg do
+			badCommand = badCommand .. arg[i] .. ' '
+		end
+
+		print('MAA: Invalid Command: ' .. badCommand)
+	end
+
+	local receivedCommand = 'maa '
+
+		for i = 1, #arg do
+			receivedCommand = receivedCommand .. arg[i] .. ' '
+		end
+
+		if debug_dev then print('MAA: Final Command: Args: ' .. #arg .. ' Cmd: ' .. receivedCommand) end
+end)
+
+function updateDisplay()
+	local skillchainCount = 1
+
+	for k, v in pairs(skillchainTargets) do
+		textBox['SC' .. skillchainCount .. 'TimeRemaining'] = string.format("%2.1f", maxPostSkillchainBurstTime - (os.clock() - skillchainTargets[k].startTime))
+		textBox['SC' .. skillchainCount .. 'Name'] = ' ' .. colors[skillchains[skillchainTargets[k].skillchain].english] .. skillchains[skillchainTargets[k].skillchain].english
+		textBox['SC' .. skillchainCount .. 'TargetName'] = colors.Gray .. ' - ' .. skillchainTargets[k].name
+		textBox:show()
+
+		skillchainCount = skillchainCount + 1
+		if skillchainCount >= skillchainsToShow then break end
+	end
+end
+
+function downgradeSpell(spell_original, maxTier, targ)
+	if debug_user then print('downgradeSpell: ' .. spell_original) end
+	local tiers = spellTiers
+
+	if not isValidSpell(spell_original) then
+		if T(ninjutsu):contains(string.lower(spell_original)) then
+			tiers = ninjutsuTiers
+		else
+			print('MAA: Invalid Spell: ' .. spell_original)
+			return
+		end
+	end
+
+	maxTier = math.min(maxTier, #tiers)
+	local spellToCast = find_spell_by_name(spell_original .. tiers[maxTier])
+
+	while not spellToCast and maxTier > 0 do
+		maxTier = maxTier - 1
+		if debug_dev then print('Checking if Valid: ' .. spell_original .. tiers[maxTier]) end
+		spellToCast = find_spell_by_name(spell_original .. tiers[maxTier])
+	end
+
+	if not spellToCast then
+		print('MAA: Invalid Spell: ' .. spell_original)
+		return
+	else
+		if debug_user then print('First Valid Spell: ' .. spellToCast.english) end
+	end
+
+	local player = windower.ffxi.get_player()
+	local player_spells = windower.ffxi.get_spells()
+	local recasts = windower.ffxi.get_spell_recasts()
+	local tierTable = {}
+	local spellBase = string.mgsub(spell_original, "%s.+", "")
+	local spellSuccess = false
+
+	main_job = string.lower(windower.ffxi.get_player().main_job)
+	merits = windower.ffxi.get_player().merits
+	jp_spent = windower.ffxi.get_player().job_points[main_job].jp_spent
+	
+	if abilityType == 'spell' and spellToCast.type == 'Ninjutsu' then
+		if spellToCast.english:endswith("San") then
+			tierTable = {': San', ': Ni', ': Ichi'}
+		elseif spellToCast.english:endswith("Ni") then
+			tierTable = {': Ni', ': Ichi'}
+		else
+			tierTable = {': Ichi'}
+		end
+	else
+		if spellToCast.english:endswith(" VI") then
+			tierTable = {" VI", " V", " IV", " III", " II", ""}
+		elseif spellToCast.english:endswith(" V") then
+			tierTable = {" V", " IV", " III", " II", ""}
+		elseif spellToCast.english:endswith(" IV") then
+			tierTable = {" IV", " III", " II", ""}
+		elseif spellToCast.english:endswith(" III") then
+			tierTable = {" III", " II", ""}
+		elseif spellToCast.english:endswith(" II") then
+			tierTable = {" II", ""}
+		else
+			tierTable = {""}
+		end
+	end
+
+	for i = 1, #tierTable do
+		if sidegradeBeforeDowngrade then
+
+		else
+			spellToCast = find_spell_by_name(spellBase .. tierTable[i])
+		end
+
+		if spellToCast then
+			if recasts[spellToCast.recast_id] == 0 and -- Spell is off cooldown
+					spellToCast.mp_cost <= player.vitals.mp and -- player has enough MP
+					((spellToCast.levels[player.main_job_id] and spellToCast.levels[player.main_job_id] <= player.main_job_level) or -- main job is high enough to cast it
+					(spellToCast.levels[player.sub_job_id] and spellToCast.levels[player.sub_job_id] <= player.sub_job_level) or -- sub job is high enough to cast it
+					spellUnlocked(spellToCast.english)) and -- player has unlocked it through job or merit points
+					player_spells[spellToCast.id] then -- the player has learned the spell. IGNORES JOB!
+				
+				if debug_user then print('MAA: Command: /ma "' .. spellToCast.english .. '" <' .. targ .. '>') end
+				windower.send_command('input /ma "' .. spellToCast.english .. '" <' .. targ .. '>')
+				spellSuccess = true
+				break
+			end
+		end
+	end
+
+	if not spellSuccess and debug_user then
+		if recasts[spellToCast.recast_id] ~= 0 then
+			windower.add_to_chat(4, 'MAA: All ' .. spellBase .. ' spells on cooldown.')
+		elseif spellToCast.mp_cost > player.vitals.mp then
+			windower.add_to_chat(4, 'MAA: Not enough MP to cast ' .. spellBase .. '.')
+		elseif not spellToCast.levels[player.main_job_id] and not spellToCast.levels[player.sub_job_id] then
+			windower.add_to_chat(4, 'MAA: ' .. player.main_job .. '/' .. player.sub_job .. ' cannot cast ' .. spellBase .. '.')
+		elseif spellToCast.levels[player.main_job_id] and spellToCast.levels[player.main_job_id] > player.main_job_level then
+			windower.add_to_chat(4, 'MAA: Job not high enough to cast ' .. spellBase .. '.')
+		elseif not spellToCast.levels[player.sub_job_id] or spellToCast.levels[player.sub_job_id] > player.sub_job_level then
+			windower.add_to_chat(4, 'MAA: Subjob not high enough to cast ' .. spellBase .. '.')
+		elseif not player_spells[spellToCast.id] then
+			windower.add_to_chat(4, 'You have not learned, or your job cannot cast, ' .. spellBase)
+		elseif not spellUnlocked(spellToCast.english) then
+			windower.add_to_chat(4, 'MAA: Not enough job points to unlock ' .. spellBase .. '.')
+		else
+			windower.add_to_chat(4, 'MAA: ' .. spellBase .. ' failed for an unknown reason.')
+		end
+	end
+end
+
+function spellUnlocked(spellName)
+	if jobPointUnlocks[main_job] and jobPointUnlocks[main_job][spellName] and jobPointUnlocks[main_job][spellName] <= jp_spent then
+		return true
+	else
+		for k, v in pairs(merits) do
+			if meritUnlocks[main_job] and meritUnlocks[main_job][k] then
+				if v ~= 0 then
+					return true
+				end
+			end
+		end
+	end
+
+	return false
+end
+
+function MBOrBestOffer(spell_selectedType, spell_selectedTier, forced, targ)
+	local weather_element = nil
+	local day_element = nil
+	local priority_element = nil
+	local skillchain_element = nil
+	local spellToCast = nil
+	local player = windower.ffxi.get_player()
+	local buff_name = ''
+	local tiers = spellTiers
+
+	if spell_selectedType == 'nin' then
+		tiers = ninjutsuTiers
+	end
+
+	spell_selectedTier = math.min(spell_selectedTier, #tiers)
+
+	-- Get weather. SCH Weather buff takes priority
+	if #player.buffs > 0 then
+		for i = 1, #player.buffs do
+			buff_name = res.buffs[player.buffs[i]].name
+
+			for o = 1, #storms do
+				if buff_name == storms[o].name then
+					weather_element = storms[o].weather
+					if debug_user then print('SCH Weather Buff Found: ' .. weather_element) end
+					break
+				end
+			end
+
+			if weather_element then
+				break
+			end
+		end
+	end
+	
+	if not weather_element then
+		weather_element = res.elements[res.weather[windower.ffxi.get_info().weather].element].en
+		if debug_user then print('Weather Found: ' .. weather_element) end
+	end
+
+	if weather_element == 'Lightning' then
+		if debug_dev then print('Changing weather from Lightning to Thunder') end
+		weather_element = 'Thunder'
+	end
+
+	-- Get day element
+	local day_element = res.elements[res.days[windower.ffxi.get_info().day].element].en
+
+	if not day_element then
+		if debugdev then print('day_element is nil') end
+	else
+		if day_element == 'Lightning' then
+			if debug_dev then print('Changing day from Lightning to Thunder') end
+			day_element = 'Thunder'
+		end
+		if debug_user then print('Day Found: ' .. day_element) end
+	end
+
+	-- Determine which benefits the spell most; Weather, day, or priority
+	if (not ignoreWeather or forced) and weather_element and T(activeSkillchain.elements):contains(weather_element) then
+		skillchain_element = weather_element
+		if debug_user then print('Bursting weather element: ' .. skillchain_element) end
+	elseif (not ignoreDay or forced) and day_element ~= nil and elements[day_element][spell_selectedType] and T(activeSkillchain.elements):contains(day_element) then
+		skillchain_element = day_element
+		if debug_user then print('Bursting day element: ' .. skillchain_element) end
+	else -- If weather or day provide no benefit, just go by priority
+		for i = 1, #spell_priorities do
+			if T(activeSkillchain.elements):contains(spell_priorities[i]) then
+				skillchain_element = spell_priorities[i]
+				if debug_user then print('Bursting priority element: ' .. skillchain_element) end
+				break
+			end
+		end
+	end
+
+	if not skillchain_element then
+		print('MAA: No skillchain_element found for ' .. activeSkillchain.english)
+		return
+	end
+
+	skillchain_element = mobOverrides(skillchain_element, forced)
+	
+	if elements[skillchain_element][spell_selectedType] then
+		spellToCast = elements[skillchain_element][spell_selectedType] .. tiers[spell_selectedTier]
+	end
+	
+	if spellToCast then
+		if debug_user then print('MAA: Spell Suggestion: ' .. spellToCast) end
+
+		if gearswapNotify and activeSkillchain.english ~= 'AnyElement' then
+			local tempElements = ''
+
+			for i = 1, #activeSkillchain.elements do
+				if activeSkillchain.elements[i] == 'Thunder' then
+					tempElements = tempElements .. 'Lightning'
+				else
+					tempElements = tempElements .. activeSkillchain.elements[i]
+				end
+			end
+
+			windower.send_command('gs c MAABurst ' .. tempElements)
+		end
+
+		downgradeSpell(elements[skillchain_element][spell_selectedType], spell_selectedTier, targ)
+	else
+		print('MAA: No valid or useful spell for ' .. skillchain_element)
+	end
+end
+
+function mobOverrides(skillchain_element, forced, target)
+	if not mobOverrides or not target then return skillchain_element end
+
+	if debug_dev then print('Target: ' .. target.name) end
+
+	if target.name:contains(' Crab') and skillchain_element == 'Water' and (activeSkillchain.skillchain.english == 'Distortion' or activeSkillchain.skillchain.english == 'Darkness' or forced) then
+		if debug_dev then print('Water detected on crab: Changing to Blizzard') end
+		return 'Ice'
+	elseif target.name:contains(' Elemental') then
+		if forced then
+			if debug_dev then print(skillchain_element .. ' forced on ' .. skillchain_element .. ' Elemental. Changing to weakness') end
+			
+			if target.name == 'Air Elemental' then
+				target.name = 'Wind Elemental'
+			end
+
+			return spell_strengths[string.sub(target.name, 1, string.find(target.name, ' ') - 1)].weakness
+		else
+
+		end
+	end
+
+	return skillchain_element
+end
+
+windower.register_event('incoming chunk', function(id, orig)
+	if id == 0x28 then
+		local packet = windower.packets.parse_action(orig)
+
+		if not T({3, 4, 11, 13, 14, 20}):contains(packet.category) then -- Valid categories, according to Skillchains addon: 3, 4, 11, 13, 14, 20
+			return
+		elseif #packet.targets ~= 1 then
+			return
+		end
+
+		if T({110, 161, 162, 187, 317}):contains(packet.targets[1].actions[1].message) then -- 2 seems to be just a normal spell cast?
+			if debug_dev then print('MAA: Unknown msg = ' .. packet.targets[1].actions[1].message) end
+		end
+
+		if validSCMessageIDs[packet.targets[1].actions[1].message] then  -- 185 is WS hit, not sure what the others are. This should be something that can either open or close a skillchain
+			local packet_skillchainID = packet.targets[1].actions[1].add_effect_message
+			local packet_target = windower.ffxi.get_mob_by_id(packet.targets[1].id)
+
+			local ability = skills[packet.category] and skills[packet.category][packet.param]
+
+			if ability then
+				ability = ability.en
+			else
+				ability = 'Unknown'
+				--print('Unknown ability: ' .. packet.category .. ' : ' .. packet.param)
+			end
+
+			if packet_skillchainID ~= 0 then -- If an ability hit that closes a skillchain, add_effect_message will contain the skillchain ID
+				if skillchainTargets[packet_target.id] then -- Check the table to see if there is already an active on the target. Replace it if so, add it if not
+					--if debug_dev then print('Active skillchain on target. Updating skillchainTargets') end
+					windower.send_command('timers d "' .. skillchains[skillchainTargets[packet_target.id].skillchain].english .. ': ' .. skillchainTargets[packet_target.id].name .. '"')
+					--skillchainTargets[packet_target.id] = {name = packet_target.name, skillchain = packet_skillchainID, startTime = os.clock()}
+					skillchainTargets[packet_target.id].skillchain = packet_skillchainID
+					skillchainTargets[packet_target.id].startTime = os.clock()
+				else
+					--if debug_dev then print('Adding skillchain to skillchainTargets') end
+					skillchainTargets[packet_target.id] = {index = packet_target.index, name = packet_target.name, skillchain = packet_skillchainID, startTime = os.clock()}
+				end
+
+				if partyAnnounce then
+					if partyCall then
+						windower.send_command('input /party Skillchain: ' .. skillchains[skillchainTargets[packet_target.id].skillchain].english .. '!  <call' .. callNumber .. '>')
+					else
+						windower.send_command('input /party Skillchain: ' .. skillchains[skillchainTargets[packet_target.id].skillchain].english .. '!')
+					end
+				elseif showSkillchainInChatWindow then
+					windower.add_to_chat(chatColor, 'MAA Skillchain: ' .. skillchains[skillchainTargets[packet_target.id].skillchain].english)
+				elseif debug_user then
+					print('MAA: Skillchain on ' .. packet_target.id)
+				end
+
+				windower.send_command('timers c "' .. skillchains[skillchainTargets[packet_target.id].skillchain].english .. ': ' .. skillchainTargets[packet_target.id].name .. '" ' .. maxPostSkillchainBurstTime .. ' down')
+			elseif packet_skillchainID == 0 and skillchainTargets[packet_target.id] then -- If an ability hits that does not close a skillchain. This includes skillchain openers and weaponskills that mess up the magic burst
+				--if os.difftime(os.clock(), skillchainTargets[packet_target.id].startTime) < 2 then -- Check if the SC was interrupted withing X seconds after the SC.
+				if os.clock() - skillchainTargets[packet_target.id].startTime < 2 then -- Check if the SC was interrupted withing X seconds after the SC.
+					local actor = windower.ffxi.get_mob_by_id(packet.actor_id)
+						if actor then
+						if partyAnnounceFuckups then
+							if partyCall then
+								windower.send_command('input /party ' .. actor.name .. ' fucked the MB by using ' .. ability .. ' <call5>')
+							else
+								windower.send_command('input /party ' .. actor.name .. ' fucked the MB by using ' .. ability)
+							end
+						elseif showSkillchainInChatWindow then
+							windower.add_to_chat(8, actor.name .. ' fucked the MB by using ' .. ability)
+						elseif debug_user then
+							print('MAA: Magic burst fucked by ' .. actor.name .. ' with ' .. ability)
+						end
+					end
+				end
+				
+				windower.send_command('timers d "' .. skillchains[skillchainTargets[packet_target.id].skillchain].english .. ': ' .. skillchainTargets[packet_target.id].name .. '"')
+				if debug_dev then print('Removing skillchain from ' .. skillchainTargets[packet_target.id].name) end
+				skillchainTargets[packet_target.id] = nil
+			end
+		end
+	end
+end)
+
+windower.register_event('prerender',function()
+	local clock = os.clock()
+
+	if os.clock() - frameTime >= 0.1 then
+		frameTime = clock
+		local skillchainIsActive = false
+
+		for k, v in pairs(skillchainTargets) do
+			skillchainIsActive = true
+
+			if os.clock() - skillchainTargets[k].startTime >= maxPostSkillchainBurstTime then
+				if debug_dev then print('Skillchain on ' .. skillchainTargets[k].name .. ' ID: ' .. k .. ' has expired.') end
+				skillchainTargets[k] = nil
+			end
+
+			if textBoxEnabled then updateDisplay() end
+		end
+		
+		if textBoxEnabled and not skillchainIsActive then
+			textBox:hide()
+		end
+	end
+end)
+
+function isValidSpell(spellName)
+	for i = 1, #res.spells do
+		if res.spells[i] then
+			if string.lower(spellName) == string.lower(res.spells[i].en) and res.spells[i].type ~= 'Trust' and res.spells[i].type ~= 'SummonerPact' then
+				return true
+			end
+		end
+	end
+
+	return false
+end
+
+function spellReadyToUse(spellname)
+	local cooldowns = windower.ffxi.get_spell_recasts()
+	
+	if cooldowns[find_spell_recast_id_by_name(spellname)] == 0 then
+		return true
+	end
+
+	return false
+end
+
+function find_spell_recast_id_by_name(spellname)
+    for spell in res.spells:it() do
+        if spell['english']:lower() == spellname:lower() then
+            return spell['recast_id']
+        end
+	end
+	
+    return nil
+end
+
+function find_spell_by_name(spellname)
+	for spell in res.spells:it() do
+		if spell['english']:lower() == spellname:lower() then
+            return spell
+        end
+	end
+	
+    return nil
+end
+
+function dump(o)   -- print a table to console  :   print(dump(table))
+	if type(o) == 'table' then
+		local s = '{ '
+
+		for k, v in pairs(o) do
+			if type(k) ~= 'number' then k = '"' .. k .. '"' end
+			s = s .. '[' .. k .. '] = ' .. dump(v) .. ','
+		end
+		return s .. '} '
+	else
+		return tostring(o)
+	end
+end
+
+windower.register_event('incoming text', function(original, modified, mode)
+	if string.find(original, 'Kefkaesque starts casting Warp II on Valok.') then
+		modified = 'Kefkaesque starts casting BANANASHITFUCK on Valok. Oh dear.'
+		return modified
+	elseif string.find(original, 'Kefkaesque starts casting Warp on Kefkaesque.') then
+		modified = 'Kefkaesque starts Warping away. Goodbye, Kefka!'
+		return modified
+	end
+end)
+
+jobPointUnlocks = {
 	blm = {
 		['Stone VI'] = 100,
 		['Water VI'] = 100,
@@ -143,30 +710,30 @@ tierUnlocks = {
 
 meritUnlocks = {
 	blm = {
-		['quake_ii'] = {name = 'Quake II', unlocked = false},
-		['burst_ii'] = {name = 'Burst II', unlocked = false},
-		['freeze_ii'] = {name = 'Freeze II', unlocked = false},
-		['flare_ii'] = {name = 'Flare II', unlocked = false},
-		['tornado_ii'] = {name = 'Tornado II', unlocked = false},
-		['flood_ii'] = {name = 'Flood II', unlocked = false},
+		['quake_ii'] = {name = 'Quake II'},
+		['burst_ii'] = {name = 'Burst II'},
+		['freeze_ii'] = {name = 'Freeze II'},
+		['flare_ii'] = {name = 'Flare II'},
+		['tornado_ii'] = {name = 'Tornado II'},
+		['flood_ii'] = {name = 'Flood II'},
 	},
 
 	rdm = {
-		['slow_ii'] = {name = 'Slow II', unlocked = false},
-		['phalanx_ii'] = {name = 'Phalanx II', unlocked = false},
-		['dia_iii'] = {name = 'Dia III', unlocked = false},
-		['paralyze_ii'] = {name = 'Paralyze II', unlocked = false},
-		['bio_iii'] = {name = 'Bio III', unlocked = false},
-		['blind_ii'] = {name = 'Blind II', unlocked = false},
+		['slow_ii'] = {name = 'Slow II'},
+		['phalanx_ii'] = {name = 'Phalanx II'},
+		['dia_iii'] = {name = 'Dia III'},
+		['paralyze_ii'] = {name = 'Paralyze II'},
+		['bio_iii'] = {name = 'Bio III'},
+		['blind_ii'] = {name = 'Blind II'},
 	},
 
 	nin = {
-		['hyoton_san']  = {name = 'Hyoton: San', unlocked = false},
-		['huton_san'] = {name = 'Huton: San', unlocked = false},
-		['katon_san'] = {name = 'Katon: San', unlocked = false},
-		['doton_san'] = {name = 'Doton: San', unlocked = false},
-		['raiton_san'] = {name = 'Raiton: San', unlocked = false},
-		['suiton_san'] = {name = 'Suiton: San', unlocked = false},
+		['hyoton_san']  = {name = 'Hyoton: San'},
+		['huton_san'] = {name = 'Huton: San'},
+		['katon_san'] = {name = 'Katon: San'},
+		['doton_san'] = {name = 'Doton: San'},
+		['raiton_san'] = {name = 'Raiton: San'},
+		['suiton_san'] = {name = 'Suiton: San'},
 	}
 }
 
@@ -208,9 +775,9 @@ ninjutsu = {
 	'kakka',
 }
 
-skillchains = { -- What about Radiance and Umbra?
-	[288] = {english = 'Light', elements = {'Light', 'Fire', 'Thunder', 'Wind'}},
-	[289] = {english = 'Darkness', elements = {'Dark', 'Earth', 'Water', 'Ice'}},
+skillchains = { -- Radiance and Umbra untested
+	[288] = {english = 'Light', elements = {'Light', 'Thunder', 'Fire', 'Wind'}},
+	[289] = {english = 'Darkness', elements = {'Dark', 'Ice', 'Water', 'Earth'}},
 	[290] = {english = 'Gravitation', elements = {'Dark', 'Earth'}},
 	[291] = {english = 'Fragmentation', elements = {'Thunder', 'Wind'}},
 	[292] = {english = 'Distortion', elements = {'Water', 'Ice'}},
@@ -223,9 +790,14 @@ skillchains = { -- What about Radiance and Umbra?
 	[299] = {english = 'Scission', elements = {'Earth'}},
 	[300] = {english = 'Detonation', elements = {'Wind'}},
 	[301] = {english = 'Impaction', elements = {'Thunder'}},
+	[302] = {english = 'Cosmic Elucidation', elements = {'Light', 'Thunder', 'Fire', 'Wind'}},
+	[767] = {english = 'Radiance', elements = {'Light', 'Thunder', 'Fire', 'Wind'}},
+	[768] = {english = 'Umbra', elements = {'Dark', 'Ice', 'Water', 'Earth'}},
 }
 
-anyNuke = {english = 'AnyElement', elements = {'Fire', 'Thunder', 'Wind', 'Earth', 'Water', 'Ice'}}
+anyNuke = {
+	english = 'AnyElement', elements = {'Thunder', 'Ice', 'Fire', 'Wind', 'Water', 'Earth'}
+}
 
 spell_priorities = {
 	'Thunder',
@@ -271,525 +843,25 @@ elements = {
 	['Light'] = {spell = nil, helix = 'Luminohelix', ga = nil, ja = nil, ra = nil, nin = nil},
 }
 
-windower.register_event('addon command', function(...)
-	if activeSkillchain.skillchain and os.clock() - activeSkillchain.startTime > maxPostSkillchainBurstTime then
-		activeSkillchain.skillchain = nil
-	end
-
-	target = windower.ffxi.get_mob_by_target('t')
-
-	if #arg > 0 and not target then
-		print('MAA: No target selected')
-		return
-	end
-
-	if #arg == 0 then -- random testing
-		print('- MagicAssistant (maa) valid commands -')
-		print('-  maa ["spell base name"] [tier]                Example:  maa Fire 4,        maa Waterga 3,   maa Aspir Best')
-		print('-  maa mb [spell/helix/ga/ja/ra/nin] [tier]      Example:  maa mb spell 4,    maa mb nin 2,    maa mb helix 2')
-		print('-  maa force [spell/helix/ga/ja/ra/nin] [tier]   Example:  maa force spell 4, maa force nin 3, maa force helix 2')
-	elseif arg[1] == 'colors' then
-		for i = 1, 60 do
-			windower.add_to_chat(i, 'Testing Color: ' .. i)
-		end
-	elseif arg[1] == 'test' then
-
-	elseif #arg == 2 then
-		if string.lower(arg[2]) ~= 'best' and not T({1, 2, 3, 4, 5, 6}):contains(tonumber(arg[2])) then
-			print('MAA: Invalid Tier. Valid examples are: 1, 2, 3, 4, 5, 6, or Best')
-			return
-		elseif string.lower(arg[2]) == 'best' then
-			downgradeSpell(arg[1], '6')
-		else
-			downgradeSpell(arg[1], arg[2])
-		end
-	elseif #arg == 3 then
-		if string.lower(arg[1]) == 'mb' then
-			-- FOR TESTING
-			--activeSkillchain.startTime = os.clock() - 2
-			--activeSkillchain.skillchain = anyNuke
-
-			if (os.clock() - activeSkillchain.startTime > maxPostSkillchainBurstTime or not activeSkillchain.skillchain) and not forced then
-				print('MAA: No Skillchain detected. MB Aborted')
-				return
-			elseif not T({'spell', 'helix', 'ga', 'ja', 'ra', 'nin'}):contains(arg[2]) then
-				print('MAA Invalid MB Spell. Valid options: spell, helix, ga, ja, ra, nin')
-				return
-			elseif string.lower(arg[3]) ~= 'best' and not T({6, 5, 4, 3, 2, 1}):contains(tonumber(arg[3])) then
-				print('MAA Invalid MB Tier. Valid options: 1, 2, 3, 4, 5, 6, Best')
-				return
-			elseif activeSkillchain.targetID ~= target.id then
-				print('MAA: No skillchain active on target')
-				return
-			else
-				if debug then print('MB: ' .. arg[2] .. ' ' .. arg[3]) end
-
-				if string.lower(arg[3]) ~= 'best' then
-					arg[3] = tonumber(arg[3])
-				end
-
-				MBOrBestOffer(arg[2], arg[3], false)
-			end
-		elseif string.lower(arg[1]) == 'force' then
-			if not T({'spell', 'helix', 'ga', 'ja', 'ra'}):contains(arg[2]) then
-				print('MAA Invalid MB Spell. Valid options: spell, helix, ga, ja, ra, nin')
-				return
-			elseif string.lower(arg[3]) ~= 'best' and not T({6, 5, 4, 3, 2, 1}):contains(tonumber(arg[3])) then
-				print('MAA Invalid Force Tier. Valid options: 1, 2, 3, 4, 5, 6, Best')
-				return
-			else
-				-- DO THE FORCE THING
-				if debug then print('Force: ' .. arg[2] .. ' ' .. arg[3]) end
-				MBOrBestOffer(arg[2], arg[3], true)
-			end
-		end
-	else
-		local badCommand = 'maa '
-
-		for i = 1, #arg do
-			badCommand = badCommand .. arg[i] .. ' '
-		end
-
-		print('MAA: Invalid Command: ' .. badCommand)
-	end
-end)
-
-function downgradeSpell(spell_original, maxTier)
-	if debug then print('downgradeSpell: ' .. spell_original) end
-	local tiers = spellTiers
-
-	if not isValidSpell(spell_original) then
-		if T(ninjutsu):contains(string.lower(spell_original)) then
-			tiers = ninjutsuTiers
-		else
-			print('Invalid Spell: ' .. spell_original)
-			return
-		end
-	end
-
-	maxTier = math.min(tonumber(maxTier), #tiers)
-	local spellToCast = find_spell_by_name(spell_original .. tiers[maxTier])
-
-	while not spellToCast and maxTier > 0 do
-		maxTier = maxTier - 1
-		print('Checking if Valid: ' .. spell_original .. tiers[maxTier])
-		spellToCast = find_spell_by_name(spell_original .. tiers[maxTier])
-	end
-
-	if not spellToCast then
-		print('Invalid Spell: ' .. spell_original)
-		return
-	else
-		if debug then print('First Valid Spell: ' .. spellToCast.english) end
-	end
-
-	local player = windower.ffxi.get_player()
-	local player_spells = windower.ffxi.get_spells()
-	local recasts = windower.ffxi.get_spell_recasts()
-	local tierTable = {}
-	local spellBase = string.mgsub(spell_original, "%s.+", "")
-	local spellSuccess = false
-
-	main_job = string.lower(windower.ffxi.get_player().main_job)
-	merits = windower.ffxi.get_player().merits
-	jp_spent = windower.ffxi.get_player().job_points[main_job].jp_spent
-	
-	if spellToCast.type == 'Ninjutsu' then
-		if spellToCast.english:endswith("San") then
-			tierTable = {': San', ': Ni', ': Ichi'}
-		elseif spellToCast.english:endswith("Ni") then
-			tierTable = {': Ni', ': Ichi'}
-		else
-			tierTable = {': Ichi'}
-		end
-	else
-		if spellToCast.english:endswith(" VI") then
-			tierTable = {" VI", " V", " IV", " III", " II", ""}
-		elseif spellToCast.english:endswith(" V") then
-			tierTable = {" V", " IV", " III", " II", ""}
-		elseif spellToCast.english:endswith(" IV") then
-			tierTable = {" IV", " III", " II", ""}
-		elseif spellToCast.english:endswith(" III") then
-			tierTable = {" III", " II", ""}
-		elseif spellToCast.english:endswith(" II") then
-			tierTable = {" II", ""}
-		else
-			tierTable = {""}
-		end
-	end
-
-	for i = 1, #tierTable do
-		spellToCast = find_spell_by_name(spellBase .. tierTable[i])
-
-		if spellToCast then
-			if recasts[spellToCast.recast_id] == 0 and -- Spell is off cooldown
-					spellToCast.mp_cost <= player.vitals.mp and -- player has enough MP
-					((spellToCast.levels[player.main_job_id] and spellToCast.levels[player.main_job_id] <= player.main_job_level) or -- main job is high enough to cast it
-					(spellToCast.levels[player.sub_job_id] and spellToCast.levels[player.sub_job_id] <= player.sub_job_level) or -- sub job is high enough to cast it
-					spellUnlocked(spellToCast.english)) and -- player has unlocked it through job or merit points
-					player_spells[spellToCast.id] then -- the player has learned the spell. IGNORES JOB!
-				
-				if debug then print('Casting: ' .. spellToCast.english) end
-				windower.send_command('input /ma "' .. spellToCast.english .. '" <t>')
-				spellSuccess = true
-				break
-			end
-		end
-	end
-
-	if not spellSuccess and debug then
-		if recasts[spellToCast.recast_id] ~= 0 then
-			windower.add_to_chat(4, 'MAA: All ' .. spellBase .. ' spells on cooldown.')
-		elseif spellToCast.mp_cost > player.vitals.mp then
-			windower.add_to_chat(4, 'MAA: Not enough MP to cast ' .. spellBase .. '.')
-		elseif not spellToCast.levels[player.main_job_id] and not spellToCast.levels[player.sub_job_id] then
-			windower.add_to_chat(4, 'MAA: ' .. player.main_job .. '/' .. player.sub_job .. ' cannot cast ' .. spellBase .. '.')
-		elseif spellToCast.levels[player.main_job_id] and spellToCast.levels[player.main_job_id] > player.main_job_level then
-			windower.add_to_chat(4, 'MAA: Job not high enough to cast ' .. spellBase .. '.')
-		elseif not spellToCast.levels[player.sub_job_id] or spellToCast.levels[player.sub_job_id] > player.sub_job_level then
-			windower.add_to_chat(4, 'MAA: Subjob not high enough to cast ' .. spellBase .. '.')
-		elseif not player_spells[spellToCast.id] then
-			windower.add_to_chat(4, 'You have not learned, or your job cannot cast, ' .. spellBase)
-		elseif not spellUnlocked(spellToCast.english) then
-			windower.add_to_chat(4, 'MAA: Not enough job points to unlock ' .. spellBase .. '.')
-		else
-			windower.add_to_chat(4, 'MAA: ' .. spellBase .. ' failed for an unknown reason.')
-		end
-	end
-end
-
-function meritTest()
-	--local main_job = string.lower(windower.ffxi.get_player().main_job)
-	--local merits = windower.ffxi.get_player().merits
-
-	for k, v in pairs(merits) do
-		if meritUnlocks[main_job] and meritUnlocks[main_job][k] then
-			if v ~= 0 then
-				meritUnlocks[main_job][k].unlocked = true
-				--print(meritUnlocks[main_job][k].name .. ' is unlocked.')
-			end
-		end
-	end
-end
-
-function spellUnlocked(spellName)
-	--local main_job = string.lower(windower.ffxi.get_player().main_job)
-	--local jp_spent = windower.ffxi.get_player().job_points[main_job].jp_spent
-
-	if tierUnlocks[main_job] and tierUnlocks[main_job][spellName] and tierUnlocks[main_job][spellName] <= jp_spent then
-		return true
-	elseif meritUnlocks[main_job] and meritUnlocks[main_job][spellName] and meritUnlocks[main_job][spellName].unlocked then
-		return true
-	end
-
-	return false
-end
-
-function MBOrBestOffer(spell_selectedType, spell_selectedTier, forced)
-	if forced then
-		activeSkillchain.skillchain = anyNuke
-	end
-
-	local tiers = spellTiers
-
-	if spell_selectedType == 'nin' then
-		tiers = ninjutsuTiers
-	end
-
-	spell_selectedTier = math.min(tonumber(spell_selectedTier), #tiers)
-
-	if debug then print('Skillchain: ' .. activeSkillchain.skillchain.english) end
-
-	local weather_element = nil
-	local day_element = nil
-	local priority_element = nil
-	local skillchain_element = nil
-	local spellToCast = nil
-	local player = windower.ffxi.get_player()
-	local buff_name = ''
-
-	-- Get weather. SCH Weather buff takes priority
-	if #player.buffs > 0 then
-		for i = 1, #player.buffs do
-			buff_name = res.buffs[player.buffs[i]].name
-
-			for o = 1, #storms do
-				if buff_name == storms[o].name then
-					weather_element = storms[o].weather
-					if debug then print('SCH Weather Buff Found: ' .. weather_element) end
-					break
-				end
-			end
-
-			if weather_element then
-				break
-			end
-		end
-	end
-	
-	if not weather_element then
-		weather_element = res.elements[res.weather[windower.ffxi.get_info().weather].element].en
-		if debug then print('Weather Found: ' .. weather_element) end
-	end
-
-	if weather_element == 'Lightning' then
-		if debug then print('Changing weather from Lightning to Thunder') end
-		weather_element = 'Thunder'
-	end
-
-	-- Get day element
-	local day_element = res.elements[res.days[windower.ffxi.get_info().day].element].en
-	if not day_element then
-		if debug then print('day_element is nil') end
-	else
-		if day_element == 'Lightning' then
-			if debug then print('Changing day from Lightning to Thunder') end
-			day_element = 'Thunder'
-		end
-		if debug then print('Day Found: ' .. day_element) end
-	end
-
-	-- Determine which benefits the spell most; Weather, day, or priority
-	if not ignoreWeather and weather_element and T(activeSkillchain.skillchain.elements):contains(weather_element) then
-		skillchain_element = weather_element
-		if debug then print('Bursting weather element: ' .. skillchain_element) end
-	elseif not ignoreDay and day_element ~= nil and elements[day_element][spell_selectedType] and T(activeSkillchain.skillchain.elements):contains(day_element) then
-		skillchain_element = day_element
-		if debug then print('Bursting day element: ' .. skillchain_element) end
-	else -- If weather or day provide no benefit, just go by priority
-		for i = 1, #spell_priorities do
-			if T(activeSkillchain.skillchain.elements):contains(spell_priorities[i]) then
-				--print(spell_priorities[i] .. ' has priority in ' .. activeSkillchain.skillchain.english)
-				skillchain_element = spell_priorities[i]
-				if debug then print('Bursting priority element: ' .. skillchain_element) end
-				break
-			end
-		end
-	end
-
-	if not skillchain_element then
-		print('No skillchain_element found for ' .. activeSkillchain.skillchain.english)
-		return
-	end
-
-	skillchain_element = mobExceptions(skillchain_element, forced)
-	
-	if elements[skillchain_element][spell_selectedType] then
-		spellToCast = elements[skillchain_element][spell_selectedType] .. tiers[spell_selectedTier]
-	end
-	
-	if spellToCast then
-		--if debug then print('Casting: ' .. spellToCast) end
-		--windower.send_command('input /ma "' .. spellToCast .. '" <t>')
-		downgradeSpell(elements[skillchain_element][spell_selectedType], spell_selectedTier)
-	else
-		print('No valid spell for ' .. skillchain_element)
-	end
-end
-
-function mobExceptions(skillchain_element, forced)
-	local battle_target = windower.ffxi.get_mob_by_target(targetmode)
-	if debug and battle_target then print('Target: ' .. battle_target.name) end
-
-	if not battle_target then
-		return skillchain_element
-	end
-	
-	if battle_target.name:contains(' Crab') and skillchain_element == 'Water' and (activeSkillchain.skillchain.english == 'Distortion' or activeSkillchain.skillchain.english == 'Darkness' or forced) then
-		if debug then print('Water detected on crab: Changing to Blizzard') end
-		return 'Ice'
-	elseif battle_target.name:contains(' Elemental') then
-		if forced then
-			if debug then print(skillchain_element .. ' forced on ' .. skillchain_element .. ' Elemental. Changing to weakness') end
-			
-			if battle_target.name == 'Air Elemental' then
-				battle_target.name = 'Wind Elemental'
-			end
-
-			return spell_strengths[string.sub(battle_target.name, 1, string.find(battle_target.name, ' ') - 1)].weakness
-		else
-
-		end
-	end
-
-	return skillchain_element
-end
-
-windower.register_event('incoming chunk', function(id, orig)
-	if activeSkillchain.skillchain and os.clock() - activeSkillchain.startTime > maxPostSkillchainBurstTime then
-		activeSkillchain.skillchain = nil
-		activeSkillchain.startTime = 0
-	end
-
-	if id == 0x28 then
-		local packet = windower.packets.parse_action(orig)
-
-		-- Categories
-		-- 3 is player weaponskills
-
-		if packet and packet.category ~= 3 then
-			--return
-			if superdebug then print(packet.category) end
-		end
-
-		for k, v in pairs(packet) do
-			--print(k, v)
-		end
-
-		local battle_target = windower.ffxi.get_mob_by_target(targetmode)
-		local msg = orig:unpack('b10', 29, 7) -- Maybe we don't need this? Find another way that's more readable
-
-		if T({2, 110, 161, 162, 187, 317}):contains(msg) then
-			if superdebug then print('MAA: Unknown msg = ' .. msg) end
-		end
-
-		 -- 2 : When an ability is used on me?
-		 -- 110:
-		 -- 161:
-		 -- 162:
-		 -- 187:
-		 -- 317:
-		 -- 185: Weaponskill hit
-		 -- 188: Weaponskill missed
-
-		if message_ids[msg] and os.clock() - activeSkillchain.openerUsed > 0.1 then
-			local mob = orig:unpack('b32', 19, 7)
-			local prop = orig:unpack('b6', 35) -- If prop = 0, there was no skillchain closed. If > 0, there was a skillchain closed
-
-			if battle_target then
-				if mob == battle_target.id then
-					if activeSkillchain.skillchain and prop == 0 then
-						if os.clock() - activeSkillchain.startTime < (maxPostSkillchainBurstTime - 0) then -- Left at 0 incase I feel it needs tweaking later
-							if showSkillchainInChatWindow then windower.add_to_chat(chatColor, 'MAA: ' .. activeSkillchain.skillchain.english .. ' Interrupted!') end
-						else
-							if debug then windower.add_to_chat(chatColor, 'MAA: New Skillchain Starting') end
-						end
-
-						--windower.add_to_chat(chatColor, 'MAA: msg = ' .. msg)
-						activeSkillchain.openerUsed = os.clock()
-						activeSkillchain.skillchain = nil
-						activeSkillchain.startTime = 0
-						--return
-					end
-				else
-					if superdebug then
-						print('MAA: Not My Target! ' .. mob .. ' ~= ' .. battle_target.id)
-						print('MAA: Category: ' .. packet.category)
-						print('----------')
-					end
-				end
-			end
-		end
-
-		for _, target in pairs(packet.targets) do
-			if battle_target and target.id == battle_target.id then
-				for _, action in pairs(target.actions) do
-					if action.add_effect_message > 287 and action.add_effect_message < 302 then
-
-						if os.clock() - activeSkillchain.startTime <= maxPostSkillchainBurstTime then
-							windower.send_command('timers d "MAGIC BURST: ' .. activeSkillchain.skillchain.english .. '"')
-						end
-
-						activeSkillchain.skillchain = skillchains[action.add_effect_message]
-						activeSkillchain.startTime = os.clock()
-						activeSkillchain.targetID = target.id
-
-						if debug then print('MAA: Skillchain on ' .. target.id) end
-
-						windower.send_command('timers c "MAGIC BURST: ' .. activeSkillchain.skillchain.english .. '" ' .. maxPostSkillchainBurstTime .. ' down')
-
-						if gearswapNotify then
-							local tempElements = ''
-
-							for i = 1, #activeSkillchain.skillchain.elements do
-								if activeSkillchain.skillchain.elements[i] == 'Thunder' then
-									tempElements = tempElements .. 'Lightning'
-								else
-									tempElements = tempElements .. activeSkillchain.skillchain.elements[i]
-								end
-							end
-
-							windower.send_command('gs c MAABurst ' .. tempElements)
-						end
-
-						if partyAnnounce then
-							if partyCall then
-								windower.send_command('input /party Skillchain: ' .. activeSkillchain.skillchain.english .. '!  <call' .. callNumber .. '>')
-							else
-								windower.send_command('input /party Skillchain: ' .. activeSkillchain.skillchain.english .. '!')
-							end
-						end
-
-						if showSkillchainInChatWindow then
-							windower.add_to_chat(chatColor, 'MAA Skillchain: ' .. activeSkillchain.skillchain.english)
-						end
-
-						break -- TESTING
-					end
-				end
-
-				break -- TESTING
-			end			
-		end
-	end
-end)
-
-function isValidSpell(spellName)
-	for i = 1, #res.spells do
-		if string.lower(spellName) == string.lower(res.spells[i].name) and res.spells[i].type ~= 'Trust' and res.spells[i].type ~= 'SummonerPact' then
-			return true
-		end
-	end
-
-	return false
-end
-
-function spellReadyToUse(spellname)
-	local cooldowns = windower.ffxi.get_spell_recasts()
-	
-	if cooldowns[find_spell_recast_id_by_name(spellname)] == 0 then
-		return true
-	end
-
-	return false
-end
-
-function find_spell_recast_id_by_name(spellname)
-    for spell in spells:it() do
-        if spell['english']:lower() == spellname:lower() then
-            return spell['recast_id']
-        end
-	end
-	
-    return nil
-end
-
-function find_spell_by_name(spellname)
-	for spell in spells:it() do
-		if spell['english']:lower() == spellname:lower() then
-            return spell
-        end
-	end
-	
-    return nil
-end
-
-function dump(o)   -- print a table to console  :   print(dump(table))
-	if type(o) == 'table' then
-		local s = '{ '
-		for k,v in pairs(o) do
-			if type(k) ~= 'number' then k = '"'..k..'"' end
-			s = s .. '['..k..'] = ' .. dump(v) .. ','
-		end
-		return s .. '} '
-	else
-		return tostring(o)
-	end
-end
-
-windower.register_event('incoming text', function(original, modified, mode)
-	if string.find(original, 'Kefkaesque starts casting Warp II on Valok.') then
-		modified = 'Kefkaesque starts casting BANANASHITFUCK on Valok.'
-		return modified
-	end
-end)
+validMBMacroTarget = {
+	't', 'bt', 'ht', 'scan'
+}
+
+validMacroTargets = {
+	'me', 't', 'bt', 'ht', 'ft', 'st', 'stpc', 'stpt', 'stal', 'stnpc', 'lastst', 'r', 'pet', 'scan',
+	'p0', 'p1', 'p2', 'p3', 'p4', 'p5',
+	'a10', 'a11', 'a12', 'a13', 'a14', 'a15',
+	'a20', 'a21', 'a22', 'a23', 'a24', 'a25',
+}
+
+--[[
+		--print('----- Packet Dump Start ------')
+		--print(dump(packet))
+		--print('Category: ' .. packet.category)
+		--print('Actor ID: ' .. packet.actor_id)
+		--print('Param: ' .. packet.param)
+		--print('Ability: ' .. ability.en)
+		--print('Target ID: ' .. packet.targets[1].id) -- if there is only 1 target
+		--print('Message: ' .. packet.targets[1].actions[1].message) -- if there is only 1 target
+		--print('------Packet Dump End ------')
+]]
