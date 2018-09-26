@@ -201,6 +201,7 @@ skills[3] = {
     }
 
 skills[4] = {
+    --[[
     [144] = {en = 'Fire', skillchain = {'Liquefaction'}},
     [145] = {en = 'Fire II', skillchain = {'Liquefaction'}},
     [146] = {en = 'Fire III', skillchain = {'Liquefaction'}},
@@ -240,6 +241,7 @@ skills[4] = {
     [284] = {en = 'Noctohelix', skillchain = {'Compression'}},
     [285] = {en = 'Luminohelix', skillchain = {'Transfixion'}},
     [503] = {en = 'Impact', skillchain = {'Compression'}},
+    ]]
     [519] = {en = 'Screwdriver', skillchain = {'Transfixion', 'Scission'}},
     [527] = {en = 'Smite of Rage', skillchain = {'Detonation'}},
     [529] = {en = 'Bludgeon', skillchain = {'Liquefaction'}},
@@ -298,6 +300,7 @@ skills[4] = {
     [740] = {en = 'Tourbillion', skillchain = {'Light', 'Fragmentation'}},
     [742] = {en = 'Bilgestorm', skillchain = {'Darkness', 'Gravitation'}},
     [743] = {en = 'Bloodrake', skillchain = {'Darkness', 'Distortion'}},
+    --[[
     [885] = {en = 'Geohelix II', skillchain = {'Scission'}},
     [886] = {en = 'Hydrohelix II', skillchain = {'Reverberation'}},
     [887] = {en = 'Anemohelix II', skillchain = {'Detonation'}},
@@ -306,6 +309,7 @@ skills[4] = {
     [890] = {en = 'Ionohelix II', skillchain = {'Impaction'}},
     [891] = {en = 'Noctohelix II', skillchain = {'Compression'}},
     [892] = {en = 'Luminohelix II', skillchain = {'Transfixion'}},
+    ]]
     }
 
 skills[11] = {
