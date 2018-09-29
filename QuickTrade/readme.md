@@ -35,7 +35,7 @@ Valid trades are as follow:
 * Wildskeeper Reive JSE Capes: Trade with an A.M.A.N. Reclaimer to trade a single cape, or trade with Makel-Pakel in the Celennia Memorial Library to trade 3 of the same cape.
 	* Currently set to NOT skip dialogue when trading JSE capes. Make sure your inventory does not have any capes that you want to keep.
 * Pellucid, Fern, and Taupe Stones: Trade with Oseem in Norg.
-
+* Ancient Beastcoins: Trade with Sagheera in Port Jeuno.
 
 * TESTED-ISH - Geas Fete: Trade with Affi, Dremi, or Shiftrix in the Escha zones and Reisenjima to speed up your aquisition of NM pop items.
 	* Not currently supported:
@@ -48,7 +48,6 @@ Valid trades are as follow:
 * UNTESTED - Salvage Plans: Trade with Mrohk Sahjuuli in Aht Urhgan Whitegate to store your plans.
 * UNTESTED - Soul Plates: Trade with Sanraku in Aht Urhgan Whitegate in exchange for Zeni.
 	* Currently set to trade only 1 at a time. This can be changed if needed.
-* UNTESTED - Ancient Beastcoins: Trade with Sagheera in Port Jeuno.
 * UNTESTED - Befouled Water: Trade to an Odyssean Passage.
 
 
@@ -113,6 +112,13 @@ The same is true regarding Itemizer. Commands will be issued, but nothing will h
 
 Version History
 ---------------
+v.1.8.0
+2018.09.28
+* Geas Fete: Key Item detection added. QuickTrade will not try to trade for a Key Item you already posses.
+* Geas Fete: After a trade, you will be reminded about your Tribulens or Radialens status.
+* WKR JSE Capes: Single trades can now be looped and the NPC text will be skipped. Be careful!
+* Mecistopins Mantle: Item ID has been fixed
+
 v.1.7.0
 2018.09.07
 * Added '//qtr loop' command to allow multiple trades to be done consecutively

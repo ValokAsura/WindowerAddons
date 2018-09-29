@@ -27,15 +27,18 @@ For more information, please refer to <http://unlicense.org/>
 
 _addon.name = 'QuickTrade'
 _addon.author = 'Valok@Asura'
-_addon.version = '1.7.0'
+_addon.version = '1.8.0'
 _addon.command = 'qtr'
 
 require('tables')
 require('coroutine')
+res = require('resources')
 
 exampleOnly = false
 textSkipTimer = 1
 lastNPC = ''
+
+chatColor = 20
 
 loopWait = 0
 loopCount = 1
@@ -45,18 +48,22 @@ loopMax = 0
 loopCurrent = 0
 lastLoopNPC = ''
 
+ownedKeyItems = {}
+ownedGeasFeteKeyItems = {}
+tribulensOrRadialensFound = false
+
 windower.register_event('addon command', function(...)
 	loopCount = 1
 	loopModeSet = false
 	loopable = false
 	loopMax = 0
 	loopCurrent = 0
-	loopText = ''
 	lastLoopNPC = ''
+	loopText = ''
+	performLoopsAfterAll = 0
 
 	if #arg > 0 and arg[1] == 'loop'then
 		loopModeSet = true
-		--print('loop request detected')
 
 		if #arg > 1 and arg[2] then
 			if not tonumber(arg[2]) then
@@ -65,7 +72,6 @@ windower.register_event('addon command', function(...)
 			end
 
 			loopMax = tonumber(arg[2])
-			--print('Max Loops: ' .. loopMax)
 		end
 	end
 
@@ -77,19 +83,20 @@ windower.register_event('addon command', function(...)
 	while loopCount > 0 and loopCurrent < loopMax do
 		loopCurrent = loopCurrent + 1
 		quicktrade(arg)
-		--print('loopCount: ' .. loopCount)
-		--loopCount = loopCount - 1
 
 		if loopCount > 0 then
-			--print(loopCount .. ' loops remaining')
 			coroutine.sleep(loopWait)
 		end
 	end
-	--print('Complete')
+	
+	if performLoopsAfterAll > 0 and not loopModeSet and #arg > 1 and arg[2] == 'loop' then -- test
+		print('Looping after All')
+		windower.send_command('qtr loop')
+	end
 end)
 
 function quicktrade(arg)
-	-- Table of the tradeable itemIDs that may be found in the player inventory
+	-- Tables of the tradeable itemIDs that may be found in the player inventory
 	local crystalIDs = {
 		{id = 4096, name = 'fire crystal', count = 0, stacks = 0, stacksize = 12},
 		{id = 4097, name = 'ice crystal', count = 0, stacks = 0, stacksize = 12},
@@ -151,7 +158,7 @@ function quicktrade(arg)
 	local alexandriteIDs = {
 		{id = 2488, name = 'alexandrite', count = 0, stacks = 0, stacksize = 99},
 	}
-
+	
 	local spGobbieKeyIDs = {
 		{id = 8973, name = 'special gobbiedial key', count = 0, stacks = 0, stacksize = 99},
 	}
@@ -205,7 +212,7 @@ function quicktrade(arg)
 		{id = 28636, name = "bookworm's cape", count = 0, stacks = 0, stacksize = 1},
 		{id = 28637, name = 'lifestream cape', count = 0, stacks = 0, stacksize = 1},
 		{id = 28638, name = "evasionist's cape", count = 0, stacks = 0, stacksize = 1},
-		{id = 74994, name = 'mecistopins Mantle', count = 0, stacks = 0, stacksize = 1},
+		{id = 27596, name = 'mecistopins mantle', count = 0, stacks = 0, stacksize = 1},
 	}
 
 	local ancientBeastcoinIDs = {
@@ -223,62 +230,62 @@ function quicktrade(arg)
 	}
 
 	local geasFeteZitahIDs = {
-		{id = 4061, name = 'riftborn boulder', count = 0, stacks = 0, stacksize = 99, minimum = 5},
-		{id = 4060, name = 'beitetsu', count = 0, stacks = 0, stacksize = 99, minimum = 5},
-		{id = 4059, name = 'pluton', count = 0, stacks = 0, stacksize = 99, minimum = 5},
-		{id = 9060, name = 'ethereal incense', count = 0, stacks = 0, stacksize = 12, minimum = 5},
-		{id = 9057, name = "ayapec's shell", count = 0, stacks = 0, stacksize = 12, minimum = 5},
-		{id = 4398, name = 'fish mithkabob', count = 0, stacks = 0, stacksize = 12, minimum = 6}, -- 1k from curio moogle
-		{id = 16581, name = 'holy sword', count = 0, stacks = 0, stacksize = 1, minimum = 1}, -- 20k or 430 sparks
-		{id = 16564, name = 'flame blade', count = 0, stacks = 0, stacksize = 1, minimum = 1}, -- 10k or 775 sparks
-		{id = 745, name = 'gold ingot', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 10k
-		{id = 829, name = 'silk cloth', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 10k
-		{id = 717, name = 'mahogany lumber', count = 0, stacks = 0, stacksize = 12, minimum = 3}, -- 10k
-		{id = 654, name = 'darksteel ingot', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 15k
-		{id = 1629, name = 'buffalo leather', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 20k
-		{id = 13091, name = 'carapace gorget', count = 0, stacks = 0, stacksize = 1, minimum = 1}, -- 60k
+		{id = 4061, name = 'riftborn boulder', count = 0, stacks = 0, stacksize = 99, ki = 2917, minimum = 5}, -- "Fleetstalker's claw"
+		{id = 4060, name = 'beitetsu', count = 0, stacks = 0, stacksize = 99, ki = 2918, minimum = 5}, -- "Shockmaw's blubber"
+		{id = 4059, name = 'pluton', count = 0, stacks = 0, stacksize = 99, ki = 2919, minimum = 5}, -- "Urmahlullu's armor"
+		{id = 9060, name = 'ethereal incense', count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 5}, -- multiple options
+		{id = 9057, name = "ayapec's shell", count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 5}, -- multiple options
+		{id = 4398, name = 'fish mithkabob', count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 6},
+		{id = 16581, name = 'holy sword', count = 0, stacks = 0, stacksize = 1, ki = "", minimum = 1},
+		{id = 16564, name = 'flame blade', count = 0, stacks = 0, stacksize = 1, ki = "", minimum = 1},
+		{id = 745, name = 'gold ingot', count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 2},
+		{id = 829, name = 'silk cloth', count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 2},
+		{id = 717, name = 'mahogany lumber', count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 3},
+		{id = 654, name = 'darksteel ingot', count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 2},
+		{id = 1629, name = 'buffalo leather', count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 2},
+		{id = 13091, name = 'carapace gorget', count = 0, stacks = 0, stacksize = 1, ki = "", minimum = 1},
 	}
 
 	local geasFeteRuaunIDs = {
-		{id = 4015, name = 'yggdreant root', count = 0, stacks = 0, stacksize = 12, minimum = 1},
-		{id = 4013, name = 'waktza crest', count = 0, stacks = 0, stacksize = 12, minimum = 1},
-		{id = 8754, name = 'cehuetzi pelt', count = 0, stacks = 0, stacksize = 12, minimum = 1},
-		{id = 9097, name = "mhuufya's beak", count = 0, stacks = 0, stacksize = 12, minimum = 5},
-		{id = 9103, name = "vidmapire's claw", count = 0, stacks = 0, stacksize = 12, minimum = 5},
-		{id = 9104, name = "centurio's armor", count = 0, stacks = 0, stacksize = 12, minimum = 5},
-		{id = 9051, name = "camahueto's fur", count = 0, stacks = 0, stacksize = 12, minimum = 5},
-		{id = 9031, name = "vedrfolnir's wing", count = 0, stacks = 0, stacksize = 12, minimum = 5},
-		{id = 9059, name = "azrael's eye", count = 0, stacks = 0, stacksize = 12, minimum = 5},
-		{id = 4479, name = 'bhefhel marlin', count = 0, stacks = 0, stacksize = 12, minimum = 1}, -- 4k id 5806?
-		{id = 4563, name = 'pamama tart', count = 0, stacks = 0, stacksize = 12, minimum = 1}, -- 10k
-		{id = 746, name = 'platinum ingot', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 13k
-		{id = 652, name = 'steel ingot', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 15k
-		{id = 719, name = 'ebony lumber', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 15k
-		{id = 2124, name = 'catoblepas leather', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 15k
-		{id = 931, name = 'cermet chunk', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 20k
-		{id = 2288, name = 'karakul cloth', count = 0, stacks = 0, stacksize = 12, minimum = 2}, -- 30k
-		{id = 13981, name = 'turtle bangles', count = 0, stacks = 0, stacksize = 1, minimum = 1}, -- 30k
+		{id = 9103, name = "vidmapire's claw", count = 0, stacks = 0, stacksize = 12, ki = 2939, minimum = 5}, -- "Palila's talon"
+		{id = 9059, name = "azrael's eye", count = 0, stacks = 0, stacksize = 12, ki = 2940, minimum = 5}, -- "Hanbi's nail"
+		{id = 9104, name = "centurio's armor", count = 0, stacks = 0, stacksize = 12, ki = 2941, minimum = 5}, -- "Yilan's scale"
+		{id = 9097, name = "mhuufya's beak", count = 0, stacks = 0, stacksize = 12, ki = 2942, minimum = 5}, -- "Amymone's tooth"
+		{id = 9051, name = "camahueto's fur", count = 0, stacks = 0, stacksize = 12, ki = 2943, minimum = 5}, -- "Naphula's bracelet"
+		{id = 9031, name = "vedrfolnir's wing", count = 0, stacks = 0, stacksize = 12, ki = 2944, minimum = 5}, -- "Kammavaca's binding"
+		{id = 4013, name = 'waktza crest', count = 0, stacks = 0, stacksize = 12, ki = 2945, minimum = 1}, -- "Pakecet's blubber"
+		{id = 4015, name = 'yggdreant root', count = 0, stacks = 0, stacksize = 12, ki = 2946, minimum = 1}, -- "Duke Vepar's signet"
+		{id = 8754, name = 'cehuetzi pelt', count = 0, stacks = 0, stacksize = 12, ki = 2947, minimum = 1}, -- "Vir'ava's stalk"
+		{id = 4479, name = 'bhefhel marlin', count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 1},
+		{id = 4563, name = 'pamama tart', count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 1},
+		{id = 746, name = 'platinum ingot', count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 2},
+		{id = 652, name = 'steel ingot', count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 2},
+		{id = 719, name = 'ebony lumber', count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 2},
+		{id = 2124, name = 'catoblepas leather', count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 2},
+		{id = 931, name = 'cermet chunk', count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 2},
+		{id = 2288, name = 'karakul cloth', count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 2},
+		{id = 13981, name = 'turtle bangles', count = 0, stacks = 0, stacksize = 1, ki = "", minimum = 1},
 	}
 
 	local geasFeteReisenjimaIDs = {
-		{id = 9151, name = "sovereign behemoth's hide", count = 0, stacks = 0, stacksize = 12, minimum = 1},
-		{id = 9150, name = "tolba's shell", count = 0, stacks = 0, stacksize = 12, minimum = 1},
-		{id = 9149, name = "hidhaegg's scale", count = 0, stacks = 0, stacksize = 12, minimum = 1},
-		{id = 6296, name = "gramk-droog's grand coffer", count = 0, stacks = 0, stacksize = 99, minimum = 1},
-		{id = 6288, name = "ignor-mnt's grand coffer", count = 0, stacks = 0, stacksize = 99, minimum = 2},
-		{id = 6290, name = "durs-vike's grand coffer", count = 0, stacks = 0, stacksize = 99, minimum = 2},
-		{id = 6294, name = "liij-vok's grand coffer", count = 0, stacks = 0, stacksize = 99, minimum = 2},
-		{id = 6292, name = "tryl-wuj's grand coffer", count = 0, stacks = 0, stacksize = 99, minimum = 2},
-		{id = 6286, name = "ymmr-ulvid's grand coffer", count = 0, stacks = 0, stacksize = 99, minimum = 2},
-		{id = 4471, name = 'bladefish', count = 0, stacks = 0, stacksize = 1, minimum = 1},
-		{id = 12302, name = 'darksteel buckler', count = 0, stacks = 0, stacksize = 1, minimum = 1},
-		{id = 862, name = 'behemoth leather', count = 0, stacks = 0, stacksize = 12, minimum = 1},
-		{id = 720, name = 'ancient lumber', count = 0, stacks = 0, stacksize = 12, minimum = 2},
-		{id = 13206, name = 'gold obi', count = 0, stacks = 0, stacksize = 1, minimum = 1},
-		{id = 13983, name = 'gold bangles', count = 0, stacks = 0, stacksize = 1, minimum = 1},
-		{id = 17601, name = "demon's knife", count = 0, stacks = 0, stacksize = 1, minimum = 1},
-		{id = 16502, name = 'venom knife', count = 0, stacks = 0, stacksize = 1, minimum = 1},
-		{id = 4418, name = 'turtle soup', count = 0, stacks = 0, stacksize = 1, minimum = 1},
+		{id = 6286, name = "ymmr-ulvid's grand coffer", count = 0, stacks = 0, stacksize = 99, ki = 3003, minimum = 2}, -- "Strophadia's pearl"
+		{id = 6288, name = "ignor-mnt's grand coffer", count = 0, stacks = 0, stacksize = 99, ki = 3004, minimum = 2}, -- "Gajasimha's mane"
+		{id = 6290, name = "durs-vike's grand coffer", count = 0, stacks = 0, stacksize = 99, ki = 3005, minimum = 2}, -- "Ironside's maul"
+		{id = 6292, name = "tryl-wuj's grand coffer", count = 0, stacks = 0, stacksize = 99, ki = 3006, minimum = 2}, -- "Sarsaok's hoard"
+		{id = 6294, name = "liij-vok's grand coffer", count = 0, stacks = 0, stacksize = 99, ki = 3007, minimum = 2}, -- "Old Shuck's tuft"
+		{id = 6296, name = "gramk-droog's grand coffer", count = 0, stacks = 0, stacksize = 99, ki = 3008, minimum = 1}, -- "Bashmu's trinket"
+		{id = 9151, name = "sovereign behemoth's hide", count = 0, stacks = 0, stacksize = 12, ki = 3009, minimum = 1}, -- "Maju's claw"
+		{id = 9149, name = "hidhaegg's scale", count = 0, stacks = 0, stacksize = 12, ki = 3010, minimum = 1}, -- "Yakshi's scroll"
+		{id = 9150, name = "tolba's shell", count = 0, stacks = 0, stacksize = 12, ki = 3011, minimum = 1}, -- "Neak's treasure"
+		{id = 4471, name = 'bladefish', count = 0, stacks = 0, stacksize = 1, ki = "", minimum = 1},
+		{id = 12302, name = 'darksteel buckler', count = 0, stacks = 0, stacksize = 1, ki = "", minimum = 1},
+		{id = 862, name = 'behemoth leather', count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 1},
+		{id = 720, name = 'ancient lumber', count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 2},
+		{id = 13206, name = 'gold obi', count = 0, stacks = 0, stacksize = 1, ki = "", minimum = 1},
+		{id = 13983, name = 'gold bangles', count = 0, stacks = 0, stacksize = 1, ki = "", minimum = 1},
+		{id = 17601, name = "demon's knife", count = 0, stacks = 0, stacksize = 1, ki = "", minimum = 1},
+		{id = 16502, name = 'venom knife', count = 0, stacks = 0, stacksize = 1, ki = "", minimum = 1},
+		{id = 4418, name = 'turtle soup', count = 0, stacks = 0, stacksize = 1, ki = "", minimum = 1},
 	}
 
 	local npcTable = {
@@ -311,7 +318,7 @@ function quicktrade(arg)
 		{name = 'Yoran-Oran', idTable = mandragoraMadIDs, tableType = 'Mandragora Mad Items', loopable = true, loopWait = 8},
 		{name = 'Melyon', idTable = onlyTheBestIDs, tableType = 'Only the Best Items', loopable = true, loopWait = 10},
 		{name = 'Sanraku', idTable = soulPlateIDs, tableType = 'Soul Plates', loopable = true, loopWait = 10},
-		{name = 'A.M.A.N. Reclaimer', idTable = jseCapeIDs, tableType = 'JSE Capes', loopable = true, loopWait = 6},
+		{name = 'A.M.A.N. Reclaimer', idTable = jseCapeIDs, tableType = 'JSE Capes', loopable = true, loopWait = 4},
 		{name = 'Makel-Pakel', idTable = jseCapeIDs, tableType = 'JSE Capes x3', loopable = false, loopWait = 0},
 		{name = 'Sagheera', idTable = ancientBeastcoinIDs, tableType = 'Ancient Beastcoins', loopable = true, loopWait = 3},
 		{name = 'Oseem', idTable = reisenjimaStones, tableType = 'Reisenjima Stones', loopable = true, loopWait = 5},
@@ -347,14 +354,10 @@ function quicktrade(arg)
 		end
 	end
 
-	
-
 	-- FOR TESTING WITHOUT NPC PRESENT!!!!!!!!!!!!!
-	--idTable = table.copy(alexandriteIDs)
-	--tableType = 'Alexandrite'
+	--idTable = table.copy(geasFeteRuaunIDs)
+	--tableType = "Geas Fete Ru'Aun Items"
 	--exampleOnly = true
-
-
 
 	if #idTable == 0 or tableType == '' then
 		print('QuickTrade: Invalid target')
@@ -369,6 +372,7 @@ function quicktrade(arg)
 
 	-- Scan the mog sack for each item in idTable
 	local mogSack = windower.ffxi.get_items('sack')
+
 	if not mogSack then
 		print('mogSack read error')
 	else
@@ -384,6 +388,7 @@ function quicktrade(arg)
 
 	-- Scan the mog case for each item in idTable
 	local mogCase = windower.ffxi.get_items('case')
+
 	if not mogCase then
 		print('mogCase read error')
 	else
@@ -398,8 +403,9 @@ function quicktrade(arg)
 	end
 
 	-- Uses the Itemizer addon to move tradable items from the mog case/sack into the player's inventory
-	if arg == 'all' and mogCase and mogSack then
+	if arg[1] == 'all' and mogCase and mogSack then
 		inventory = windower.ffxi.get_items('inventory')
+		
 		for i = 1, #idTable do
 			for k, v in ipairs(inventory) do
 				if v.id == idTable[i].id then
@@ -411,14 +417,26 @@ function quicktrade(arg)
 
 		for i = 1, #mogSackTable do
 			if mogSackTable[i].count + mogCaseTable[i].count > 0 then
-				if exampleOnly then
-					print('//get "' .. mogSackTable[i].name ..  '" ' .. idTable[i].count + mogSackTable[i].count + mogCaseTable[i].count)
+				inventory = windower.ffxi.get_items('inventory')
+
+				if inventory.count + mogSackTable[i].stacks + mogCaseTable[i].stacks <= inventory.max then
+					if exampleOnly then
+						print('get "' .. mogSackTable[i].name ..  '" ' .. idTable[i].count + mogSackTable[i].count + mogCaseTable[i].count)
+					else
+						windower.add_to_chat(chatColor, 'QuickTrade: Please wait - Using Itemizer to transfer ' .. mogSackTable[i].count + mogCaseTable[i].count .. ' ' .. mogSackTable[i].name .. ' to inventory')
+						windower.send_command('get "' .. mogSackTable[i].name ..  '" ' .. idTable[i].count + mogSackTable[i].count + mogCaseTable[i].count)
+						performLoopsAfterAll = performLoopsAfterAll + 1
+						coroutine.sleep(2.5)
+					end
 				else
-					windower.add_to_chat(4, 'QuickTrade: Please wait - Using Itemizer to transfer ' .. mogSackTable[i].count + mogCaseTable[i].count .. ' ' .. mogSackTable[i].name .. ' to inventory')
-					windower.send_command('input //get "' .. mogSackTable[i].name ..  '" ' .. idTable[i].count + mogSackTable[i].count + mogCaseTable[i].count)
-					coroutine.sleep(2.5)
+					windower.add_to_chat(chatColor, 'QuickTrade: Not enough inventory space to pull ' .. mogSackTable[i].count + mogCaseTable[i].count .. ' ' .. mogSackTable[i].name)
 				end
 			end
+		end
+
+		if #arg > 1 and #arg[2] == 'loop' and performLoopsAfterAll > 0 then
+			loopCount = 0
+			return
 		end
 
 		for i = 1, #idTable do
@@ -446,7 +464,7 @@ function quicktrade(arg)
 			end
 			
 			if mogCount > 0 then
-				windower.add_to_chat(4, 'QuickTrade: ' .. mogCount .. ' of these items are in your mog sack/case. Type "//qtr all" if you wish to move them into your inventory and trade them. Requires Itemizer')
+				windower.add_to_chat(chatColor, 'QuickTrade: ' .. mogCount .. ' of these items are in your mog sack/case. Type "//qtr all" if you wish to move them into your inventory and trade them. Requires Itemizer')
 			end
 		end
 	end
@@ -461,7 +479,7 @@ function quicktrade(arg)
 	end
 
 	if tableType == 'Special Gobbiedial Keys' and inventory.count == inventory.max then
-		windower.add_to_chat(4, 'QuickTrade: Inventory full. Cancelling Special Gobbiedial Key Trades.')
+		windower.add_to_chat(chatColor, 'QuickTrade: Inventory full. Cancelling Special Gobbiedial Key Trades.')
 		loopCount = 0
 		return
 	end
@@ -511,14 +529,11 @@ function quicktrade(arg)
 		numTrades = numTrades + math.floor(idTable[1].count / 5)
 		numTrades = numTrades + math.floor(idTable[2].count / 3)
 		numTrades = numTrades + idTable[3].count
-	--elseif tableType == 'Special Gobbiedial Keys' or tableType == 'Soul Plates' then
-	--	numTrades = idTable[1].count
 	elseif tableType == 'Reisenjima Stones' then -- Can trade all types at once
 		numTrades = math.ceil((idTable[1].stacks + idTable[2].stacks + idTable[3].stacks) / 8)
 	elseif tableType == "Geas Fete Zi'Tah Items" or tableType == "Geas Fete Ru'Aun Items" or tableType == "Geas Fete Reisenjima Items" then
 		for i = 1, #idTable do
 			if idTable[i].count >= idTable[i].minimum then
-				print(idTable[i].count .. ' ' .. idTable[i].name)
 				numTrades = numTrades + math.floor(idTable[i].count / idTable[i].minimum)
 			end
 		end
@@ -536,17 +551,16 @@ function quicktrade(arg)
 
 	-- Prepare and send command through TradeNPC if there are trades to be made
 	if numTrades > 0 then
-		local tradeString = '//tradenpc '
+		local tradeString = 'tradenpc '
 		local tradeList = ''
 		availableTradeSlots = 8
 		
 		if tableType == 'Crystals' then
-			tradeString = '//tradenpc'
+			tradeString = 'tradenpc'
 
 			for i = 1, 8 do
 				-- Build the string that will be used as the command
-				--availableTradeSlots = 8
-				
+
 				if idTable[i].count > 0 then
 					tradeString = tradeString .. ' ' .. math.min(availableTradeSlots * idTable[i].stacksize, idTable[i].count) .. ' "' .. idTable[i].name .. '"'
 					availableTradeSlots = math.max(0, availableTradeSlots - idTable[i].stacks)
@@ -562,14 +576,14 @@ function quicktrade(arg)
 				end
 			end
 		elseif tableType == 'Special Gobbiedial Keys' or tableType == 'Soul Plates' then -- 1 item at a time
-			tradeString = '//tradenpc  1 "' .. idTable[1].name .. '"'
+			tradeString = 'tradenpc  1 "' .. idTable[1].name .. '"'
 		elseif tableType == 'Zinc Ore' or tableType == 'Yagudo Necklaces' then -- 4 items at a time
 			if idTable[1].count >= 4 then
-				tradeString = '//tradenpc 4 "' .. idTable[1].name .. '"'
+				tradeString = 'tradenpc 4 "' .. idTable[1].name .. '"'
 			end
 		elseif tableType == 'Mandragora Mad Items' or tableType == 'JSE Capes' then
 			for i = 1, #idTable do
-				tradeString = '//tradenpc '
+				tradeString = 'tradenpc '
 
 				if idTable[i].count > 0 then
 					tradeString = tradeString .. '1 "' .. idTable[i].name .. '"'
@@ -578,7 +592,7 @@ function quicktrade(arg)
 			end
 		elseif tableType == 'JSE Capes x3' then
 			for i = 1, #idTable do
-				tradeString = '//tradenpc '
+				tradeString = 'tradenpc '
 
 				if idTable[i].count >= 3 then
 					tradeString = tradeString .. '3 "' .. idTable[i].name .. '"'
@@ -587,7 +601,7 @@ function quicktrade(arg)
 			end
 		elseif tableType == 'Only the Best Items' then
 			for i = 1, #idTable do
-				tradeString = '//tradenpc '
+				tradeString = 'tradenpc '
 
 				if idTable[1].count >= 5 then
 					tradeString = tradeString .. '5 "' .. idTable[1].name .. '"'
@@ -605,7 +619,7 @@ function quicktrade(arg)
 				end
 			end
 		elseif tableType == 'Reisenjima Stones' then
-			tradeString = '//tradenpc'
+			tradeString = 'tradenpc'
 
 			for i = 1, #idTable do
 				if idTable[i].count > 0 then
@@ -618,18 +632,42 @@ function quicktrade(arg)
 				end
 			end
 		elseif tableType == "Geas Fete Zi'Tah Items" or tableType == "Geas Fete Ru'Aun Items" or tableType == "Geas Fete Reisenjima Items" then
-			for i = 1, #idTable do
-				if idTable[i].count >= idTable[i].minimum then
-					tradeString = '//tradenpc ' .. idTable[i].minimum .. ' "' .. idTable[i].name .. '"'
-					tradeList = idTable[i].minimum .. ' ' .. idTable[i].name
-					break
+			local keyItemFound = false
+			local validTradeFound = false
+			local possibleTrades = 0
+
+			if getGeasFeteKeyItems() then
+				for i = 1, #idTable do
+					keyItemFound = false
+
+					if idTable[i].count >= idTable[i].minimum then
+						possibleTrades = possibleTrades + 1
+
+						for o = 1, #ownedGeasFeteKeyItems do
+							if ownedGeasFeteKeyItems[o].id == idTable[i].ki then
+								keyItemFound = true
+								break
+							end
+						end
+
+						if not keyItemFound then
+							validTradeFound = true
+							tradeString = 'tradenpc ' .. idTable[i].minimum .. ' "' .. idTable[i].name .. '"'
+							tradeList = idTable[i].minimum .. ' ' .. idTable[i].name
+							break
+						end
+					end
 				end
+			end
+
+			if possibleTrades > 0 and not validTradeFound then
+				windower.add_to_chat(chatColor, 'QuickTrade: You but you already possess all possible pop items.')
 			end
 		else
 			for i = 1, #idTable do
 				loopable = true -- May not work for everything
 
-				tradeString = '//tradenpc '
+				tradeString = 'tradenpc '
 				availableTradeSlots = 8
 				
 				if idTable[i].count > 0 then
@@ -639,71 +677,113 @@ function quicktrade(arg)
 			end
 		end
 
-		if tradeString ~= '//tradenpc ' then
-			if loopModeSet and loopable then
-				loopCount = numTrades
+		if loopModeSet and loopable then
+			loopCount = numTrades
 
-				if loopMax ~= 100000 then
-					numTrades = loopMax - loopCurrent + 1
-					loopText = ' Loop: ' .. loopCurrent .. '/' .. loopMax
-				else
-					loopMax = numTrades
-					loopText = ' Loop: ' .. loopCurrent .. '/' .. numTrades
-				end
+			if loopMax ~= 100000 then
+				numTrades = loopMax - loopCurrent + 1
+				loopText = ' Loop: ' .. loopCurrent .. '/' .. loopMax
 			else
-				loopCount = 0
-				loopText = ''
+				loopMax = numTrades
+				loopText = ' Loop: ' .. loopCurrent .. '/' .. numTrades
 			end
+		else
+			loopCount = 0
+			loopText = ''
+		end
 
+		if tradeString ~= 'tradenpc ' and not (#arg > 1 and #arg[2] == 'loop' and performLoopsAfterAll > 0) then
 			if numTrades - 1 == 0 then
-				windower.add_to_chat(4, 'QuickTrade: Trading Complete.' .. loopText)
-			elseif numTrades - 1 == 1 then
-				windower.add_to_chat(4, 'QuickTrade: ' .. (numTrades - 1) .. ' trade remaining.' .. loopText)
+				windower.add_to_chat(chatColor, 'QuickTrade: Trading Complete.' .. loopText)
 			else
-				windower.add_to_chat(4, 'QuickTrade: ' .. (numTrades - 1) .. ' trades remaining.' .. loopText)
+				windower.add_to_chat(chatColor, 'QuickTrade: Trades Remaining: ' .. (numTrades - 1) .. loopText)
 			end
 			
 			if exampleOnly then
 				print(tradeString)
 			else
-				if tableType ~= 'JSE Capes' and tableType ~= 'JSE Capes x3' and not string.find(tableType, 'Geas Fete') then
+				if tableType ~= 'JSE Capes x3' and not string.find(tableType, 'Geas Fete') then
 					textSkipTimer = os.time()
 				end
 				
-				windower.send_command('input ' .. tradeString)
+				windower.send_command(tradeString)
 			end
 
 			if string.find(tableType, 'Geas Fete') then
-				windower.add_to_chat(4, 'QuickTrade: Trading '.. tradeList)
-				windower.add_to_chat(4, "QuickTrade: Don't forget your Tribulens or Radialens!")
+				windower.add_to_chat(chatColor, 'QuickTrade: Trading '.. tradeList)
 			end
 
 			if loopModeSet then
 				loopCount = loopCount - 1
 			end
 		end
+
+		if string.find(tableType, 'Geas Fete') then
+			if tribulensOrRadialensFound then
+				windower.add_to_chat(chatColor, "QuickTrade: You already possess a Tribulens or Radialens!")
+			else
+				windower.add_to_chat(chatColor, "QuickTrade: Don't forget your Tribulens or Radialens!")
+			end
+		end
 	else
-		if arg == 'all' then
-			windower.add_to_chat(4, "QuickTrade - No " .. tableType .. " in inventory, mog case, or mog sack")
+		if arg[1] == 'all' then
+			windower.add_to_chat(chatColor, "QuickTrade: No " .. tableType .. " in inventory, mog case, or mog sack")
 		else
-			windower.add_to_chat(4, "QuickTrade - No " .. tableType .. " in inventory")
+			windower.add_to_chat(chatColor, "QuickTrade: No " .. tableType .. " in inventory")
 		end
 
 		loopCount = 0
 		loopModeSet = false
 	end
 end
- 
+
+function getGeasFeteKeyItems()
+    -- This provides a list of all key items in resources that are under the category "Geas Fete"
+	ownedGeasFeteKeyItems = {}
+	tribulensOrRadialensFound = false
+
+	if getOwnedKeyItems() then
+    	for _, keyItem in pairs(res.key_items) do
+	        if keyItem.category == 'Geas Fete' then
+				for o = 1, #ownedKeyItems do
+					if keyItem.id == ownedKeyItems[o] then
+						table.insert(ownedGeasFeteKeyItems, {['id'] = keyItem.id, ['name'] = keyItem.en})
+						--print(ownedGeasFeteKeyItems[#ownedGeasFeteKeyItems].id, ownedGeasFeteKeyItems[#ownedGeasFeteKeyItems].name)
+
+						if keyItem.en == 'Radialens' or keyItem.en == 'Tribulens' or keyItem.id == 3031 or keyItem.id == 2894 then
+							tribulensOrRadialensFound = true
+						end
+
+						break
+					end
+				end
+        	end
+		end
+
+		if #ownedGeasFeteKeyItems > 0 then
+			return true
+		else
+			return false
+		end
+	end
+end
+
+function getOwnedKeyItems()
+    ownedKeyItems = windower.ffxi.get_key_items()
+
+    if not ownedKeyItems or #ownedKeyItems == 0 then
+       print('Error reading key items. Try again in a moment')
+       ownedKeyItems = {}
+       return false
+    end
+
+    return true
+end
+
 windower.register_event('incoming text', function(original, modified, mode)
 	-- Allow the addon to skip the conversation text for up to 10 seconds after the trade
 	if os.time() - textSkipTimer > 10 then
 		return
-	end
-	
-	local target = windower.ffxi.get_mob_by_target('t')
-	
-	if not target then
-		return false
 	end
 	
 	if mode == 150 or mode == 151 then
