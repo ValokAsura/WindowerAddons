@@ -30,7 +30,7 @@ packets = require('packets')
 
 --[[ DEBUGGING ]]--
 debug_exampleOnly = false -- Setting this to true will prevent all /maa macros from actually casting spells!!! You will only see the final output printed in the console
-debug_level = 3  -- 0: Disabled, 1: user, 2: dev, 3: experimental
+debug_level = 0  -- 0: Disabled, 1: user, 2: dev, 3: experimental
 
 --[[ MAIN SETTINGS ]]--
 showOthersSkillchains = false
@@ -59,7 +59,7 @@ gearswapNotify = 	true
 -- A Scission skillchain will sent: MAABurst Earth
 
 allowBurstingWithoutTarget = false
--- Uses the mob ID as a target when casting a magic burst without a valid target
+-- Uses the mob ID as a target when casting a magic burst without an active target
 -- Must have Gearswap installed and gearswapInstalled must = true
 
 mobOverrides = true
@@ -70,7 +70,7 @@ mobOverrides = true
 --[[  TEXTBOX SETTINGS  ]]-- The addon can optionally show a pop-up window with information regarding any active Skillchains, their targets, and their time remaining
 						  -- Type 'maa example' in the console to get a preview of the pop-up. You can click and drag it to any desired location in your FFXI window
 textBox_enabled = 			true
-textBox_skillchainsToShow =    4 -- Showing more than 1 is rarely going to be useful, if ever
+textBox_skillchainsToShow =    1 -- Showing more than 1 is rarely going to be useful, if ever
 textBox_showTimer = 	    true
 textBox_showSkillchain =    true
 textBox_showTargetName =    true
