@@ -1,11 +1,9 @@
 --[[
 This is free and unencumbered software released into the public domain.
-
 Anyone is free to copy, modify, publish, use, compile, sell, or
 distribute this software, either in source code form or as a compiled
 binary, for any purpose, commercial or non-commercial, and by any
 means.
-
 In jurisdictions that recognize copyright laws, the author or authors
 of this software dedicate any and all copyright interest in the
 software to the public domain. We make this dedication for the benefit
@@ -13,7 +11,6 @@ of the public at large and to the detriment of our heirs and
 successors. We intend this dedication to be an overt act of
 relinquishment in perpetuity of all present and future rights to this
 software under copyright law.
-
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -21,7 +18,6 @@ IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
 OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
-
 For more information, please refer to <http://unlicense.org/>
 ]]
 
@@ -288,6 +284,23 @@ function quicktrade(arg)
 		{id = 4418, name = 'turtle soup', count = 0, stacks = 0, stacksize = 1, ki = "", minimum = 1},
 	}
 
+	local craftingSpheres = {
+		{ id = 9524, name = "liquefaction sphere", count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 1},
+		{ id = 9525, name = "induration sphere", count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 1},
+		{ id = 9526, name = "detonation sphere", count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 1},
+		{ id = 9527, name = "scission sphere", count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 1},
+		{ id = 9528, name = "impaction sphere", count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 1},
+		{ id = 9529, name = "reverberation sphere", count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 1},
+		{ id = 9530, name = "transfixion sphere", count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 1},
+		{ id = 9531, name = "compression sphere", count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 1},
+		{ id = 9532, name = "fusion sphere", count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 1},
+		{ id = 9533, name = "distortion sphere", count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 1},
+		{ id = 9534, name = "fragmentation sphere", count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 1},
+		{ id = 9535, name = "gravitation sphere", count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 1},
+		{ id = 9536, name = "light sphere", count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 1},
+		{ id = 9537, name = "darkness sphere", count = 0, stacks = 0, stacksize = 12, ki = "", minimum = 1}
+	}
+
 	local npcTable = {
 		{name = 'Shami', idTable = sealIDs, tableType = 'Seals', loopable = true, loopWait = 3},
 		{name = 'Ephemeral Moogle', idTable = crystalIDs, tableType = 'Crystals', loopable = true, loopWait = 9},
@@ -326,6 +339,7 @@ function quicktrade(arg)
 		{name = 'Affi', idTable = geasFeteZitahIDs, tableType = "Geas Fete Zi'Tah Items", loopable = false, loopWait = 0},
 		{name = 'Dremi', idTable = geasFeteRuaunIDs, tableType = "Geas Fete Ru'Aun Items", loopable = false, loopWait = 0},
 		{name = 'Shiftrix', idTable = geasFeteReisenjimaIDs, tableType = "Geas Fete Reisenjima Items", loopable = false, loopWait = 0},
+		{name = 'Synthesis Focuser II', idTable = craftingSpheres, tableType = "Crafting Spheres", loopable = true, loopwait = 1}
 	}
 	
 	local idTable = {}
