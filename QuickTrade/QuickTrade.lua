@@ -167,6 +167,10 @@ function quicktrade(arg)
 		{id = 642, name = 'zinc ore', count = 0, stacks = 0, stacksize = 12},
 	}
 
+	local darksteelOreIDs = {
+		{id = 645, name = 'darksteel ore', count = 0, stacks = 0, stacksize = 12},
+	}
+
 	local yagudoNecklaceIDs = {
 		{id = 498, name = 'yagudo necklace', count = 0, stacks = 0, stacksize = 12},
 	}
@@ -314,6 +318,7 @@ function quicktrade(arg)
 		{name = 'Rewardox', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys', loopable = true, loopWait = 14},
 		{name = 'Winrix', idTable = spGobbieKeyIDs, tableType = 'Special Gobbiedial Keys', loopable = true, loopWait = 14},
 		{name = 'Talib', idTable = zincOreIDs, tableType = 'Zinc Ore', loopable = true, loopWait = 3},
+		{name = 'Mighty Fist', idTable = darksteelOreIDs, tableType = 'Darksteel Ore', loopable = true, loopWait = 6},
 		{name = 'Nanaa Mihgo', idTable = yagudoNecklaceIDs, tableType = 'Yagudo Necklaces', loopable = true, loopWait = 10},
 		{name = 'Yoran-Oran', idTable = mandragoraMadIDs, tableType = 'Mandragora Mad Items', loopable = true, loopWait = 8},
 		{name = 'Melyon', idTable = onlyTheBestIDs, tableType = 'Only the Best Items', loopable = true, loopWait = 10},
@@ -515,6 +520,8 @@ function quicktrade(arg)
 		end
 	elseif tableType == 'Zinc Ore' or tableType == 'Yagudo Necklaces' then -- 4 at a time
 		numTrades = math.floor(idTable[1].count / 4)
+	elseif tableType == 'Darksteel Ore' then -- 2 at a time
+		numTrades = math.floor(idTable[1].count / 2)
 	elseif tableType == 'Mandragora Mad Items' or tableType == 'JSE Capes' or tableType == 'Special Gobbiedial Keys' or tableType == 'Soul Plates' then -- 1 at a time
 		for i = 1, #idTable do
 			numTrades = numTrades + idTable[i].count
@@ -580,6 +587,10 @@ function quicktrade(arg)
 		elseif tableType == 'Zinc Ore' or tableType == 'Yagudo Necklaces' then -- 4 items at a time
 			if idTable[1].count >= 4 then
 				tradeString = 'tradenpc 4 "' .. idTable[1].name .. '"'
+			end
+		elseif tableType == 'Darksteel Ore' then -- 2 items at a time
+			if idTable[1].count >= 2 then
+				tradeString = 'tradenpc 2 "' .. idTable[1].name .. '"'
 			end
 		elseif tableType == 'Mandragora Mad Items' or tableType == 'JSE Capes' then
 			for i = 1, #idTable do
